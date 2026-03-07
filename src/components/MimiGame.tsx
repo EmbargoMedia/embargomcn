@@ -1,0 +1,459 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { X, Play, RotateCcw, Trophy, Music, Zap, Heart, Star, ArrowRight, Volume2, Eye } from 'lucide-react';
+
+interface MimiGameProps {
+  onClose: () => void;
+  t: any;
+}
+
+const MimiGame: React.FC<MimiGameProps> = ({ onClose, t }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [gameState, setGameState] = useState<'start' | 'playing' | 'paused' | 'gameover' | 'levelclear'>('start');
+  const [score, setScore] = useState(0);
+  const [level, setLevel] = useState(1);
+  const [lives, setLives] = useState(3);
+  const [showVisualAid, setShowVisualAid] = useState(true);
+  const [missionText, setMissionText] = useState('');
+  
+  // Game constants
+  const GRAVITY = 0.5;
+  const JUMP_FORCE = -12;
+  const SPEED = 5;
+  
+  // Audio context for missions
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  
+  const initAudio = () => {
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+  };
+
+  const playSound = (freq: number, type: OscillatorType = 'sine', duration: number = 0.3) => {
+    if (!audioCtxRef.current) return;
+    const osc = audioCtxRef.current.createOscillator();
+    const gain = audioCtxRef.current.createGain();
+    
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtxRef.current.currentTime);
+    
+    gain.gain.setValueAtTime(0.1, audioCtxRef.current.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtxRef.current.currentTime + duration);
+    
+    osc.connect(gain);
+    gain.connect(audioCtxRef.current.destination);
+    
+    osc.start();
+    osc.stop(audioCtxRef.current.currentTime + duration);
+  };
+
+  useEffect(() => {
+    if (gameState !== 'playing') return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    
+    // Game objects
+    const player = {
+      x: 100,
+      y: 300,
+      width: 40,
+      height: 40,
+      dy: 0,
+      isGrounded: false,
+      color: '#F27D26' // Mimi's orange
+    };
+
+    const platforms = [
+      { x: 0, y: 500, width: 800, height: 100, type: 'normal' },
+      { x: 300, y: 350, width: 150, height: 20, type: 'rhythm', freq: 440 },
+      { x: 550, y: 250, width: 150, height: 20, type: 'pitch', freq: 660 },
+      { x: 800, y: 400, width: 200, height: 20, type: 'normal' },
+      { x: 1100, y: 300, width: 150, height: 20, type: 'sequence', freq: 880, id: 1 },
+      { x: 1350, y: 200, width: 150, height: 20, type: 'sequence', freq: 1100, id: 2 },
+    ];
+
+    const items = [
+      { x: 400, y: 300, width: 20, height: 20, collected: false, type: 'timbre', freq: 440 },
+      { x: 650, y: 200, width: 20, height: 20, collected: false, type: 'score' },
+      { x: 1200, y: 250, width: 20, height: 20, collected: false, type: 'score' },
+    ];
+
+    let cameraX = 0;
+    const keys: { [key: string]: boolean } = {};
+
+    const handleKeyDown = (e: KeyboardEvent) => keys[e.code] = true;
+    const handleKeyUp = (e: KeyboardEvent) => keys[e.code] = false;
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    const update = () => {
+      // Player movement
+      if (keys['ArrowRight']) player.x += SPEED;
+      if (keys['ArrowLeft']) player.x -= SPEED;
+      
+      if (keys['Space'] && player.isGrounded) {
+        player.dy = JUMP_FORCE;
+        player.isGrounded = false;
+        playSound(300, 'square', 0.1);
+      }
+
+      // Gravity
+      player.dy += GRAVITY;
+      player.y += player.dy;
+
+      // Collision detection with platforms
+      player.isGrounded = false;
+      platforms.forEach(p => {
+        if (
+          player.x < p.x + p.width &&
+          player.x + player.width > p.x &&
+          player.y + player.height > p.y &&
+          player.y + player.height < p.y + p.height &&
+          player.dy >= 0
+        ) {
+          player.y = p.y - player.height;
+          player.dy = 0;
+          player.isGrounded = true;
+          
+          // Mission interactions
+          if (p.type === 'rhythm' && Math.random() < 0.05) {
+            playSound(p.freq || 440);
+            if (showVisualAid) setMissionText("Rhythm Match!");
+          }
+        }
+      });
+
+      // Item collection
+      items.forEach(item => {
+        if (!item.collected && 
+            player.x < item.x + item.width &&
+            player.x + player.width > item.x &&
+            player.y < item.y + item.height &&
+            player.y + player.height > item.y) {
+          item.collected = true;
+          setScore(s => s + 100);
+          if (item.type === 'timbre') {
+            playSound(item.freq || 440, 'triangle');
+            setMissionText("Timbre Found!");
+          } else {
+            playSound(1000, 'sine', 0.1);
+          }
+        }
+      });
+
+      // Camera follow
+      cameraX = player.x - canvas.width / 3;
+      if (cameraX < 0) cameraX = 0;
+
+      // Game over condition
+      if (player.y > canvas.height) {
+        setLives(l => {
+          if (l <= 1) {
+            setGameState('gameover');
+            return 0;
+          }
+          player.x = 100;
+          player.y = 300;
+          player.dy = 0;
+          return l - 1;
+        });
+      }
+
+      // Level clear condition
+      if (player.x > 1500) {
+        setGameState('levelclear');
+      }
+    };
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.save();
+      ctx.translate(-cameraX, 0);
+
+      // Draw background elements (simple)
+      ctx.fillStyle = '#1A1A1A';
+      ctx.fillRect(0, 0, 2000, canvas.height);
+
+      // Draw platforms
+      platforms.forEach(p => {
+        ctx.fillStyle = p.type === 'normal' ? '#333' : '#F27D26';
+        if (p.type === 'rhythm' && showVisualAid) {
+          // Pulse effect for visual aid
+          const pulse = Math.sin(Date.now() / 200) * 5;
+          ctx.shadowBlur = 15 + pulse;
+          ctx.shadowColor = '#F27D26';
+        }
+        ctx.fillRect(p.x, p.y, p.width, p.height);
+        ctx.shadowBlur = 0;
+      });
+
+      // Draw items
+      items.forEach(item => {
+        if (!item.collected) {
+          ctx.fillStyle = item.type === 'timbre' ? '#00FF00' : '#FFD700';
+          ctx.beginPath();
+          ctx.arc(item.x + item.width/2, item.y + item.height/2, item.width/2, 0, Math.PI * 2);
+          ctx.fill();
+          
+          if (showVisualAid) {
+            ctx.strokeStyle = '#FFF';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          }
+        }
+      });
+
+      // Draw player (Mimi)
+      ctx.fillStyle = player.color;
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+      
+      // Draw Mimi's ears
+      ctx.beginPath();
+      ctx.moveTo(player.x, player.y);
+      ctx.lineTo(player.x + 10, player.y - 15);
+      ctx.lineTo(player.x + 20, player.y);
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.moveTo(player.x + player.width - 20, player.y);
+      ctx.lineTo(player.x + player.width - 10, player.y - 15);
+      ctx.lineTo(player.x + player.width, player.y);
+      ctx.fill();
+
+      ctx.restore();
+    };
+
+    const loop = () => {
+      update();
+      draw();
+      animationFrameId = requestAnimationFrame(loop);
+    };
+
+    loop();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [gameState, showVisualAid]);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] bg-brand-black flex flex-col items-center justify-center overflow-hidden"
+    >
+      {/* Header */}
+      <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center bg-gradient-to-b from-brand-black to-transparent z-10">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-brand-gold/20 flex items-center justify-center border border-brand-gold/30">
+            <Music className="w-6 h-6 text-brand-gold" />
+          </div>
+          <div>
+            <h1 className="text-xl font-black text-white tracking-tight">Mimi's Sound Adventure</h1>
+            <div className="flex items-center gap-3 mt-1">
+              <div className="flex items-center gap-1">
+                <Star className="w-3 h-3 text-brand-gold fill-current" />
+                <span className="text-xs font-bold text-slate-400">Level {level}</span>
+              </div>
+              <div className="w-1 h-1 rounded-full bg-slate-700" />
+              <span className="text-xs font-bold text-brand-gold">{score} pts</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setShowVisualAid(!showVisualAid)}
+            className={`p-3 rounded-xl border transition-all ${showVisualAid ? 'bg-brand-gold/20 border-brand-gold/50 text-brand-gold' : 'bg-brand-dark-gray/40 border-brand-border text-slate-500'}`}
+          >
+            <Eye className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={onClose}
+            className="p-3 rounded-xl bg-brand-dark-gray/40 border border-brand-border text-slate-400 hover:text-white transition-all"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Game Canvas */}
+      <div className="relative w-full max-w-4xl aspect-[16/9] bg-brand-dark-gray/20 rounded-[40px] border border-brand-border overflow-hidden shadow-2xl">
+        <canvas 
+          ref={canvasRef} 
+          width={800} 
+          height={450} 
+          className="w-full h-full"
+        />
+
+        {/* HUD - Lives & Waveform */}
+        <div className="absolute bottom-8 left-8 right-8 flex justify-between items-end">
+          <div className="flex gap-2">
+            {[...Array(3)].map((_, i) => (
+              <Heart 
+                key={i} 
+                className={`w-6 h-6 ${i < lives ? 'text-red-500 fill-current' : 'text-slate-700'}`} 
+              />
+            ))}
+          </div>
+
+          {showVisualAid && (
+            <div className="flex items-end gap-1 h-12 px-6 py-3 bg-brand-gold/10 backdrop-blur-md rounded-2xl border border-brand-gold/20">
+              {[...Array(12)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  animate={{ 
+                    height: [
+                      '20%', 
+                      `${20 + Math.random() * 80}%`, 
+                      `${20 + Math.random() * 40}%`, 
+                      '20%'
+                    ] 
+                  }}
+                  transition={{ 
+                    repeat: Infinity, 
+                    duration: 0.5 + Math.random(),
+                    ease: "easeInOut"
+                  }}
+                  className="w-1 bg-brand-gold rounded-full"
+                />
+              ))}
+              <span className="ml-3 text-[10px] font-black text-brand-gold uppercase tracking-widest">Audio Visualizer</span>
+            </div>
+          )}
+        </div>
+
+        {/* Mission Overlay */}
+        <AnimatePresence>
+          {missionText && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              onAnimationComplete={() => setTimeout(() => setMissionText(''), 2000)}
+              className="absolute top-1/4 left-1/2 -translate-x-1/2 px-6 py-3 bg-brand-gold/20 backdrop-blur-md border border-brand-gold/40 rounded-full"
+            >
+              <p className="text-brand-gold font-black text-lg tracking-widest uppercase">{missionText}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Game State Overlays */}
+        <AnimatePresence>
+          {gameState === 'start' && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="absolute inset-0 bg-brand-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-8 text-center"
+            >
+              <div className="w-24 h-24 rounded-[32px] bg-brand-gold flex items-center justify-center mb-6 shadow-2xl shadow-brand-gold/20">
+                <Play className="w-12 h-12 text-brand-black fill-current" />
+              </div>
+              <h2 className="text-4xl font-black text-white mb-4 tracking-tight">Ready for Adventure?</h2>
+              <p className="text-slate-400 max-w-md mb-8 leading-relaxed">
+                Help Mimi explore the world by listening to sounds. 
+                Jump on rhythm blocks and collect matching timbres!
+              </p>
+              <button 
+                onClick={() => {
+                  initAudio();
+                  setGameState('playing');
+                }}
+                className="px-12 py-5 bg-brand-gold text-brand-black font-black text-xl rounded-2xl shadow-xl shadow-brand-gold/20 hover:scale-105 transition-all"
+              >
+                START MISSION
+              </button>
+            </motion.div>
+          )}
+
+          {gameState === 'gameover' && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="absolute inset-0 bg-brand-black/90 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center"
+            >
+              <div className="w-20 h-20 rounded-full bg-red-500/20 flex items-center justify-center mb-6 border border-red-500/40">
+                <RotateCcw className="w-10 h-10 text-red-500" />
+              </div>
+              <h2 className="text-4xl font-black text-white mb-2">Mission Failed</h2>
+              <p className="text-slate-500 mb-8">Don't worry, Mimi is ready to try again!</p>
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => {
+                    setLives(3);
+                    setScore(0);
+                    setGameState('playing');
+                  }}
+                  className="px-8 py-4 bg-white text-brand-black font-black rounded-xl hover:bg-slate-100 transition-all"
+                >
+                  RETRY
+                </button>
+                <button 
+                  onClick={onClose}
+                  className="px-8 py-4 bg-brand-dark-gray text-white font-black rounded-xl border border-brand-border hover:bg-brand-border transition-all"
+                >
+                  QUIT
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {gameState === 'levelclear' && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="absolute inset-0 bg-brand-black/90 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center"
+            >
+              <div className="w-24 h-24 rounded-full bg-brand-gold/20 flex items-center justify-center mb-6 border border-brand-gold/40 animate-bounce">
+                <Trophy className="w-12 h-12 text-brand-gold" />
+              </div>
+              <h2 className="text-4xl font-black text-white mb-2 tracking-tight">Level {level} Complete!</h2>
+              <p className="text-brand-gold font-bold text-xl mb-8">Score: {score}</p>
+              <button 
+                onClick={() => {
+                  setLevel(l => l + 1);
+                  setGameState('playing');
+                }}
+                className="px-12 py-5 bg-brand-gold text-brand-black font-black text-xl rounded-2xl shadow-xl shadow-brand-gold/20 flex items-center gap-3"
+              >
+                NEXT LEVEL
+                <ArrowRight className="w-6 h-6" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Controls Help */}
+      <div className="mt-12 grid grid-cols-3 gap-8 max-w-2xl w-full">
+        <div className="flex items-center gap-4 bg-brand-dark-gray/20 p-4 rounded-2xl border border-brand-border">
+          <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-white font-black">←</div>
+          <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-white font-black">→</div>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Move</p>
+        </div>
+        <div className="flex items-center gap-4 bg-brand-dark-gray/20 p-4 rounded-2xl border border-brand-border">
+          <div className="px-4 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-white font-black text-xs">SPACE</div>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Jump</p>
+        </div>
+        <div className="flex items-center gap-4 bg-brand-dark-gray/20 p-4 rounded-2xl border border-brand-border">
+          <div className="w-10 h-10 rounded-xl bg-brand-gold/20 flex items-center justify-center">
+            <Volume2 className="w-5 h-5 text-brand-gold" />
+          </div>
+          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Listen</p>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+export default MimiGame;

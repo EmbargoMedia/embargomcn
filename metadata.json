@@ -1,0 +1,5 @@
+{
+  "name": "Obige - Smart Hearing Agent",
+  "description": "AI-powered hearing loss risk prediction and pure-tone audiometry testing app.",
+  "requestFramePermissions": ["microphone"]
+}
