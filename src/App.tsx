@@ -35,7 +35,8 @@ import {
   Download,
   Play,
   Zap,
-  Sparkles
+  Sparkles,
+  Trophy
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -55,6 +56,7 @@ import MimiGame from './components/MimiGame';
 import { generateLandingImage } from './services/imageService';
 import SoundBlockTetris from './components/SoundBlockTetris';
 import TarotGame from './components/TarotGame';
+import PokerGame from './components/PokerGame';
 import WelfareFinder from './components/WelfareFinder';
 import HumanBodyDiagram from './components/HumanBodyDiagram';
 import { cn } from './utils/cn';
@@ -129,6 +131,7 @@ export default function App() {
   const [showTetrisGame, setShowTetrisGame] = useState(false);
   const [showMimiGame, setShowMimiGame] = useState(false);
   const [showTarotGame, setShowTarotGame] = useState(false);
+  const [showPokerGame, setShowPokerGame] = useState(false);
   const [reportChartImage, setReportChartImage] = useState('');
   const [contactForm, setContactForm] = useState({
     name: '',
@@ -139,6 +142,17 @@ export default function App() {
   });
   const [isSubmittingContact, setIsSubmittingContact] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, [messages, isTyping, step]);
 
   const handleLike = (articleId: string) => {
     const isLiked = userLiked[articleId];
@@ -188,55 +202,6 @@ export default function App() {
     } catch (err) {
       console.error('Share failed:', err);
     }
-  };
-
-  const handleShareResultsToChat = async () => {
-    if (!prediction) return;
-    
-    // Add a "user" message saying they are sharing results
-    addUserMessage((t as any).shareResults || "Share Results");
-    
-    setIsTyping(true);
-    
-    // Create a PDF-like component for the chat
-    const PDFBox = (
-      <div className="bg-brand-dark-gray/60 backdrop-blur-md rounded-2xl p-4 border border-brand-gold/30 space-y-3 w-full max-w-[280px]">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-brand-gold/10 flex items-center justify-center border border-brand-gold/20">
-            <Download className="w-6 h-6 text-brand-gold" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-white truncate">Hearing_Report_{formData.name || 'User'}.pdf</p>
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{(t as any).aiReport || "AI Report"}</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-brand-white/5">
-          <div className="text-center">
-            <p className="text-[8px] text-slate-500 font-bold uppercase">{(t as any).grade || "Grade"}</p>
-            <p className="text-xs font-bold text-white truncate">{getGradeLabel(prediction.grade)}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-[8px] text-slate-500 font-bold uppercase">{(t as any).score || "Score"}</p>
-            <p className="text-xs font-bold text-brand-gold">{Math.round(prediction.score)}</p>
-          </div>
-        </div>
-        <button 
-          onClick={() => setShowReportModal(true)}
-          className="w-full py-2 rounded-xl bg-brand-gold/10 border border-brand-gold/30 text-brand-gold text-[10px] font-black uppercase tracking-widest hover:bg-brand-gold/20 transition-all"
-        >
-          {(t as any).viewReport || "View Report"}
-        </button>
-      </div>
-    );
-
-    setTimeout(() => {
-      setMessages(prev => [...prev, { 
-        id: Math.random().toString(), 
-        type: 'bot', 
-        component: PDFBox 
-      }]);
-      setIsTyping(false);
-    }, 1000);
   };
 
   const handleDownloadPDF = async () => {
@@ -384,33 +349,6 @@ export default function App() {
     return grade;
   };
 
-  const handleAnalyzeReport = async () => {
-    if (!resultsRef.current) return;
-    setIsAnalyzingReport(true);
-    addBotMessage((t as any).analyzingReport);
-
-    try {
-      // Capture the chart specifically
-      const chartElement = resultsRef.current.querySelector('.recharts-responsive-container');
-      let chartImage = '';
-      if (chartElement) {
-        const chartCanvas = await html2canvas(chartElement as HTMLElement, {
-          backgroundColor: '#0A0A0A',
-          scale: 2
-        });
-        chartImage = chartCanvas.toDataURL('image/png');
-      }
-
-      setReportChartImage(chartImage);
-      setShowReportModal(true);
-      setIsAnalyzingReport(false);
-      addBotMessage((t as any).reportReady);
-    } catch (error) {
-      console.error('Error analyzing report:', error);
-      setIsAnalyzingReport(false);
-      addBotMessage("An error occurred while analyzing the report.");
-    }
-  };
 
   // Initial Welcome
   useEffect(() => {
@@ -528,16 +466,107 @@ export default function App() {
         break;
 
       case 'finish-test':
-        const fullData: HearingData = {
-          age: parseInt(formData.age) || 30,
-          gender: formData.gender,
-          lifestyle: [], // Default empty as it's not in formData yet
-          symptoms: [], // Default empty as it's not in formData yet
-          ptaResults: ptaResults.map(r => r.threshold),
+        const thresholds = ptaResults.map(r => r.threshold);
+        const avgThreshold = thresholds.length > 0 ? thresholds.reduce((a, b) => a + b, 0) / thresholds.length : 0;
+        
+        // Simple score calculation (0-100, where 100 is worst)
+        const score = Math.min(100, Math.max(0, avgThreshold));
+        
+        let grade = 'Normal';
+        if (avgThreshold > 80) grade = 'Profound';
+        else if (avgThreshold > 60) grade = 'Severe';
+        else if (avgThreshold > 40) grade = 'Moderate';
+        else if (avgThreshold > 25) grade = 'Mild';
+        
+        const localPrediction = {
+          grade,
+          score,
+          analysis: "청력 검사 결과 데이터 기반 즉시 분석입니다.",
+          recommendations: ["정기적인 검진을 권장합니다."],
+          followUp: "6개월 후 재검사"
         };
-        const res = await predictHearingRisk(fullData);
-        setPrediction(res);
-        setStep('results');
+        
+        setPrediction(localPrediction);
+        setIsTyping(true);
+        
+        setTimeout(() => {
+          setMessages(prev => [...prev, {
+            id: `report-${Date.now()}`,
+            type: 'bot',
+            text: "청력 검사가 완료되었습니다. 분석 결과 레포트입니다.",
+          }, {
+            id: `report-component-${Date.now()}`,
+            type: 'bot',
+            component: (
+              <div className="w-full mt-4 space-y-6">
+                <div className="bg-brand-black rounded-[24px] p-6 text-center border border-brand-gold/30 shadow-[0_0_20px_rgba(197,160,89,0.1)] relative overflow-hidden">
+                  <div className="absolute -right-4 -top-4 opacity-10">
+                    <Ear className="w-20 h-20 text-brand-gold rotate-12" />
+                  </div>
+                  <div className="relative z-10">
+                    <div className="w-12 h-12 bg-brand-gold/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Ear className="w-6 h-6 text-brand-gold" />
+                    </div>
+                    <p className="text-brand-gold text-sm font-bold mb-1">{(t as any).hearingAgeScreening}</p>
+                    <h3 className="text-2xl font-black text-white">
+                      {(t as any).hearingAgeResult.replace('{age}', calculateHearingAge(score, parseInt(formData.age) || 30))}
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-brand-black/40 backdrop-blur-md rounded-[20px] p-4 text-center border border-brand-border">
+                    <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest block mb-1">{t.grade}</span>
+                    <span className="text-sm font-bold text-white">{getGradeLabel(grade)}</span>
+                  </div>
+                  <div className="bg-brand-black/40 backdrop-blur-md rounded-[20px] p-4 text-center border border-brand-border">
+                    <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest block mb-1">{t.riskScore}</span>
+                    <span className="text-sm font-bold text-brand-gold">{Math.round(score)}</span>
+                  </div>
+                </div>
+
+                <div className="h-40 w-full bg-brand-black/20 rounded-xl p-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={ptaResults}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                      <XAxis dataKey="frequency" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+                      <YAxis reversed domain={[0, 100]} stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
+                      <Line type="monotone" dataKey="threshold" stroke="#C5A059" strokeWidth={3} dot={{ fill: '#C5A059', r: 4 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="p-4 bg-brand-gold/10 rounded-xl border border-brand-gold/30">
+                  <p className="text-brand-gold text-[10px] font-black mb-1 uppercase tracking-tight">상태 요약</p>
+                  <p className="text-white text-xs font-bold leading-relaxed">
+                    {score < 30 
+                      ? "청력이 매우 건강한 상태입니다. 현재의 생활 습관을 유지하며 정기적인 검진을 권장합니다." 
+                      : score < 60 
+                      ? "약간의 청력 저하가 관찰됩니다. 소음 노출을 줄이고 전문가와의 상담을 고려해보세요." 
+                      : "청력 손실 위험이 높습니다. 빠른 시일 내에 이비인후과 전문의의 정밀 검사를 받으시길 권장합니다."}
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setShowReportModal(true)}
+                    className="flex-1 py-3 rounded-xl bg-brand-gold text-brand-black text-[11px] font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-lg shadow-brand-gold/20"
+                  >
+                    상세 레포트 보기
+                  </button>
+                  <button 
+                    onClick={() => setStep('welcome')}
+                    className="flex-1 py-3 rounded-xl bg-brand-dark-gray/60 border border-brand-border text-white text-[11px] font-black uppercase tracking-widest hover:bg-brand-dark-gray transition-all"
+                  >
+                    다시 검사하기
+                  </button>
+                </div>
+              </div>
+            )
+          }]);
+          setIsTyping(false);
+          setStep('welcome'); // Reset step but messages stay in chat
+        }, 1500);
         break;
 
       case 'retest':
@@ -764,7 +793,7 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen bg-transparent text-white flex flex-col items-center justify-start overflow-hidden font-sans relative">
+    <div className="h-dvh bg-transparent text-white flex flex-col items-center justify-start overflow-hidden font-sans relative">
       {/* Welfare Finder Overlay */}
       <AnimatePresence>
         {showWelfareFinder && (
@@ -796,7 +825,10 @@ export default function App() {
       </header>
 
       {/* Chat Area */}
-      <main className="flex-1 w-full max-w-md overflow-y-auto p-6 space-y-6 scrollbar-hide pb-64">
+      <main 
+        ref={chatContainerRef}
+        className="flex-1 w-full max-w-md overflow-y-auto p-6 space-y-8 pb-[420px] scroll-smooth scrollbar-hide"
+      >
         {activeTab === 'hearing' ? (
           <AnimatePresence initial={false}>
             {messages.map((msg) => (
@@ -814,6 +846,7 @@ export default function App() {
                   msg.type === 'user' ? "chat-bubble-user" : "chat-bubble-bot"
                 )}>
                   {msg.text}
+                  {msg.component}
                 </div>
               </motion.div>
             ))}
@@ -873,141 +906,6 @@ export default function App() {
                     >
                       {t.ptaHeard}
                     </button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-
-            {step === 'results' && prediction && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="w-full space-y-4 pt-4"
-              >
-                <div ref={resultsRef} className="bg-brand-dark-gray/40 backdrop-blur-md rounded-[32px] p-10 border border-brand-border shadow-xl space-y-10">
-                  <div className="text-center space-y-3">
-                    <h2 className="text-2xl font-bold text-white">{t.resultsTitle}</h2>
-                    <p className="text-xs text-brand-gold font-bold uppercase tracking-[0.2em]">{(t as any).aiReport}</p>
-                  </div>
-
-                  <div className="bg-brand-black rounded-[24px] p-8 text-center border border-brand-gold/30 shadow-[0_0_20px_rgba(197,160,89,0.1)] relative overflow-hidden">
-                    <div className="absolute -right-4 -top-4 opacity-10">
-                      <Ear className="w-24 h-24 text-brand-gold rotate-12" />
-                    </div>
-                    <div className="relative z-10">
-                      <div className="w-16 h-16 bg-brand-gold/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Ear className="w-8 h-8 text-brand-gold" />
-                      </div>
-                      <p className="text-brand-gold text-lg font-bold mb-2">{(t as any).hearingAgeScreening}</p>
-                      <h3 className="text-3xl font-black text-white">
-                        {(t as any).hearingAgeResult.replace('{age}', calculateHearingAge(prediction.score, parseInt(formData.age) || 30))}
-                      </h3>
-                    </div>
-                  </div>
-
-                  {formData.ageGroup === 'senior' && questionnaireAnswers.length > 0 && (
-                    <div className="bg-brand-black/40 backdrop-blur-md rounded-[24px] p-8 text-center border border-brand-gold/30 shadow-[0_0_20px_rgba(197,160,89,0.1)]">
-                      <p className="text-brand-gold text-sm font-bold mb-2 uppercase tracking-widest">{(t as any).keshhTitle}</p>
-                      <div className="space-y-2">
-                        <p className="text-3xl font-black text-white">
-                          {questionnaireAnswers.reduce((a: number, b: number) => a + b, 0)}{(t as any).keshhPoints}
-                        </p>
-                        <p className="text-xl font-bold text-brand-gold">
-                          {(() => {
-                            const score = questionnaireAnswers.reduce((a: number, b: number) => a + b, 0);
-                            if (score >= 86) return (t as any).keshhCat5;
-                            if (score >= 77) return (t as any).keshhCat4;
-                            if (score >= 67) return (t as any).keshhCat3;
-                            if (score >= 55) return (t as any).keshhCat2;
-                            if (score >= 24) return (t as any).keshhCat1;
-                            return (t as any).keshhNormal;
-                          })()}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 gap-5">
-                    <div className="bg-brand-black/40 backdrop-blur-md rounded-[24px] p-6 text-center border border-brand-border">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-2">{t.grade}</span>
-                      <span className="text-xl font-bold text-white">{getGradeLabel(prediction.grade)}</span>
-                    </div>
-                  </div>
-
-                  <div className="bg-brand-black/40 backdrop-blur-md rounded-[24px] p-8 text-center border border-brand-border">
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-3">{t.riskScore}</span>
-                    <div className="relative h-4 bg-brand-dark-gray rounded-full overflow-hidden mb-2">
-                      <motion.div 
-                        initial={{ width: 0 }}
-                        animate={{ width: `${prediction.score}%` }}
-                        className={cn(
-                          "h-full rounded-full",
-                          prediction.score < 30 ? "bg-emerald-500" : prediction.score < 60 ? "bg-brand-gold" : "bg-rose-500"
-                        )}
-                      />
-                    </div>
-                    <span className="text-4xl font-black text-brand-gold">{Math.round(prediction.score)}</span>
-                  </div>
-
-                  <div className="h-56 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={ptaResults}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
-                        <XAxis dataKey="frequency" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                        <YAxis reversed domain={[0, 100]} stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-                        <Line type="monotone" dataKey="threshold" stroke="#C5A059" strokeWidth={4} dot={{ fill: '#C5A059', r: 5 }} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  <div className="p-6 bg-brand-black/50 rounded-[24px] border-2 border-brand-gold/20 shadow-[0_0_15px_rgba(197,160,89,0.05)]">
-                    <p className="text-[14px] text-slate-300 leading-relaxed text-center font-medium">
-                      <span className="text-brand-gold font-black text-base block mb-2">※ {(t as any).cautionTitle}</span> 
-                      {(t as any).cautionText}
-                    </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="bg-brand-gold/10 rounded-2xl p-6 border border-brand-gold/30 text-center">
-                      <p className="text-brand-gold text-sm font-black mb-2 uppercase tracking-tight">청력 건강 상태 요약</p>
-                      <p className="text-white font-bold leading-relaxed">
-                        {prediction.score < 30 
-                          ? "청력이 매우 건강한 상태입니다. 현재의 생활 습관을 유지하며 정기적인 검진을 권장합니다." 
-                          : prediction.score < 60 
-                          ? "약간의 청력 저하가 관찰됩니다. 소음 노출을 줄이고 전문가와의 상담을 고려해보세요." 
-                          : "청력 손실 위험이 높습니다. 빠른 시일 내에 이비인후과 전문의의 정밀 검사를 받으시길 권장합니다."}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-6">
-                    <div className="text-center">
-                      <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-4">{(t as any).shareWithFriends}</p>
-                      <div className="flex justify-center gap-6">
-                        <button className="w-12 h-12 rounded-full bg-[#FEE500] flex items-center justify-center text-black hover:scale-110 transition-transform">
-                          <MessageSquare className="w-6 h-6 fill-current" />
-                        </button>
-                        <button className="w-12 h-12 rounded-full bg-[#1877F2] flex items-center justify-center text-white hover:scale-110 transition-transform">
-                          <Users className="w-6 h-6" />
-                        </button>
-                        <button className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#F58529] via-[#DD2A7B] to-[#8134AF] flex items-center justify-center text-white hover:scale-110 transition-transform">
-                          <Share2 className="w-6 h-6" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-4">
-                      <button onClick={() => handleAction('retest')} className="flex-1 py-5 rounded-2xl bg-brand-black/40 backdrop-blur-sm border border-brand-border text-slate-400 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-                        <RefreshCcw className="w-4 h-4" /> {t.retest}
-                      </button>
-                      <button 
-                        onClick={handleShareResultsToChat}
-                        className="flex-1 py-5 rounded-2xl bg-brand-gold text-brand-black text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-brand-gold/20"
-                      >
-                        <Share2 className="w-4 h-4" /> {t.share}
-                      </button>
-                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -1226,6 +1124,18 @@ export default function App() {
                     <span>Sound Block Tetris</span>
                   </div>
                   <span className="text-[10px] uppercase tracking-[0.2em] opacity-60 relative z-10">Auditory Cognitive Training</span>
+                </button>
+
+                <button 
+                  onClick={() => setShowPokerGame(true)}
+                  className="w-full py-6 rounded-[32px] bg-emerald-600 text-white font-black text-2xl shadow-2xl shadow-emerald-900/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-1 group relative overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+                  <div className="flex items-center gap-3 relative z-10">
+                    <Trophy className="w-8 h-8 fill-current" />
+                    <span>{lang === 'ko' ? '텍사스 홀덤 포커' : "Texas Hold'em Poker"}</span>
+                  </div>
+                  <span className="text-[10px] uppercase tracking-[0.2em] opacity-60 relative z-10">Strategic Cognitive Training</span>
                 </button>
               </div>
             </div>
@@ -1584,6 +1494,12 @@ export default function App() {
             lang={lang}
           />
         )}
+        {showPokerGame && (
+          <PokerGame 
+            onClose={() => setShowPokerGame(false)}
+            lang={lang}
+          />
+        )}
         {showLifeRhythmReport && lifeRhythmResult && (
           <motion.div 
             initial={{ opacity: 0 }}
@@ -1910,8 +1826,15 @@ export default function App() {
                     <span className="w-1.5 h-6 bg-slate-900 rounded-full"></span>
                     Audiogram Results
                   </h2>
-                  <div className="bg-slate-900 rounded-3xl p-6 flex justify-center">
-                    <img src={reportChartImage} className="max-w-full h-auto rounded-xl" alt="Audiogram" />
+                  <div className="bg-slate-900 rounded-3xl p-6 flex justify-center h-64 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={ptaResults}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                        <XAxis dataKey="frequency" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                        <YAxis reversed domain={[0, 100]} stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                        <Line type="monotone" dataKey="threshold" stroke="#C5A059" strokeWidth={4} dot={{ fill: '#C5A059', r: 5 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
 
@@ -1984,7 +1907,7 @@ export default function App() {
       </AnimatePresence>
 
       {/* Bottom Navigation Bar */}
-      <nav className="w-full max-w-md bg-brand-dark-gray/60 backdrop-blur-xl border-t border-brand-border px-6 py-3 flex justify-between items-center z-50 sticky bottom-0">
+      <nav className="w-full max-w-md bg-brand-dark-gray/60 backdrop-blur-xl border-t border-brand-border px-6 py-3 flex justify-between items-center z-50">
         {[
           { id: 'welfare', icon: Search, label: (t as any).navWelfare },
           { id: 'hearing', icon: Ear, label: (t as any).navHearing },
