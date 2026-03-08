@@ -54,6 +54,7 @@ import MimiGame from './components/MimiGame';
 import { generateLandingImage } from './services/imageService';
 import SoundBlockTetris from './components/SoundBlockTetris';
 import TarotGame from './components/TarotGame';
+import WelfareFinder from './components/WelfareFinder';
 import { cn } from './utils/cn';
 import { translations, Language, healthTips, questionnaireQuestions } from './constants';
 
@@ -85,6 +86,7 @@ export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [step, setStep] = useState<string>('welcome');
+  const [showWelfareFinder, setShowWelfareFinder] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -526,8 +528,7 @@ export default function App() {
 
       case 'others':
         addUserMessage(t.others);
-        setStep('others-links');
-        addBotMessage(`${(t as any).preparingTitle}. ${(t as any).preparingSub}`);
+        addBotMessage((t as any).realTimeConsultationPreparing);
         break;
     }
   };
@@ -676,6 +677,16 @@ export default function App() {
 
   return (
     <div className="h-screen bg-transparent text-white flex flex-col items-center justify-start overflow-hidden font-sans relative">
+      {/* Welfare Finder Overlay */}
+      <AnimatePresence>
+        {showWelfareFinder && (
+          <WelfareFinder 
+            onClose={() => setShowWelfareFinder(false)} 
+            lang={lang} 
+          />
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <header className="w-full max-w-md bg-brand-dark-gray/40 backdrop-blur-xl border-b border-brand-white/10 px-6 py-5 flex items-center justify-between sticky top-0 z-50">
         <button 
@@ -739,38 +750,38 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 className="w-full space-y-4 pt-4"
               >
-                <div className="bg-brand-dark-gray/40 backdrop-blur-md rounded-[32px] p-10 border border-brand-border shadow-xl space-y-10">
+                <div className="bg-brand-dark-gray/40 backdrop-blur-md rounded-[32px] p-6 border border-brand-border shadow-xl space-y-6">
                   <div className="flex justify-between items-center">
-                    <div className="space-y-2">
-                      <span className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">{(t as any).frequency}</span>
-                      <p className="text-3xl font-black text-brand-gold">{FREQUENCIES[ptaIndex]} Hz</p>
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">{(t as any).frequency}</span>
+                      <p className="text-xl font-black text-brand-gold">{FREQUENCIES[ptaIndex]} Hz</p>
                     </div>
-                    <div className="text-right space-y-2">
-                      <span className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">{(t as any).progress}</span>
-                      <p className="text-base font-bold text-slate-400">{ptaIndex + 1} / {FREQUENCIES.length}</p>
+                    <div className="text-right space-y-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">{(t as any).progress}</span>
+                      <p className="text-sm font-bold text-slate-400">{ptaIndex + 1} / {FREQUENCIES.length}</p>
                     </div>
                   </div>
                   
-                  <div className="flex justify-center py-8">
+                  <div className="flex justify-center py-4">
                     <motion.div 
                       animate={{ scale: [1, 1.05, 1] }}
                       transition={{ duration: 2, repeat: Infinity }}
-                      className="w-48 h-48 rounded-full bg-brand-black/40 backdrop-blur-md border border-brand-gold/20 flex items-center justify-center relative"
+                      className="w-32 h-32 rounded-full bg-brand-black/40 backdrop-blur-md border border-brand-gold/20 flex items-center justify-center relative"
                     >
-                      <Volume2 className="w-16 h-16 text-brand-gold" />
+                      <Volume2 className="w-10 h-10 text-brand-gold" />
                     </motion.div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-5">
+                  <div className="grid grid-cols-2 gap-3">
                     <button
                       onClick={() => handleAction('pta-response', false)}
-                      className="py-6 rounded-2xl bg-brand-black/40 backdrop-blur-sm border border-brand-border text-slate-500 font-bold text-sm hover:bg-brand-gold/5 transition-all"
+                      className="py-2.5 rounded-xl bg-brand-black/40 backdrop-blur-sm border border-brand-border text-slate-500 font-bold text-[11px] hover:bg-brand-gold/5 transition-all"
                     >
                       {t.ptaNotHeard}
                     </button>
                     <button
                       onClick={() => handleAction('pta-response', true)}
-                      className="py-6 rounded-2xl bg-brand-gold text-brand-black font-bold text-sm shadow-lg shadow-brand-gold/20 hover:brightness-110 transition-all"
+                      className="py-2.5 rounded-xl bg-brand-gold text-brand-black font-bold text-[11px] shadow-lg shadow-brand-gold/20 hover:brightness-110 transition-all"
                     >
                       {t.ptaHeard}
                     </button>
@@ -907,26 +918,7 @@ export default function App() {
             )}
           </AnimatePresence>
         ) : activeTab === 'welfare' ? (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col items-center justify-center h-full text-center space-y-6 py-20"
-          >
-            <div className="w-24 h-24 rounded-full bg-brand-gold/10 flex items-center justify-center border border-brand-gold/30 animate-pulse">
-              <Search className="w-12 h-12 text-brand-gold" />
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-2xl font-black text-white">{(t as any).navWelfare}</h2>
-              <p className="text-slate-400 font-bold">{(t as any).preparingTitle}</p>
-              <p className="text-slate-500 text-sm">{(t as any).preparingSub}</p>
-            </div>
-            <button 
-              onClick={() => setActiveTab('hearing')}
-              className="px-8 py-4 rounded-2xl bg-brand-dark-gray border border-brand-border text-white font-bold hover:bg-brand-gold/10 transition-all"
-            >
-              {(t as any).backToHome}
-            </button>
-          </motion.div>
+          <WelfareFinder lang={lang} isTab={true} />
         ) : activeTab === 'community' ? (
           <motion.div
             initial={{ opacity: 0, x: 20 }}
@@ -1090,7 +1082,7 @@ export default function App() {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col items-center justify-center h-full text-center space-y-8 py-20"
+            className="flex flex-col items-center justify-center text-center space-y-8 pt-32 pb-20"
           >
             <div className="relative w-full aspect-video rounded-[40px] overflow-hidden shadow-2xl shadow-brand-gold/10 mb-4">
               <img 
@@ -1108,12 +1100,12 @@ export default function App() {
             </div>
             
             <div className="space-y-4 px-6">
+              <h2 className="text-2xl font-black text-white leading-tight mb-2">{(t as any).navGame}</h2>
               <span className="px-4 py-1 bg-brand-gold/10 text-brand-gold text-[10px] font-black rounded-full uppercase tracking-[0.3em] border border-brand-gold/20">
                 Auditory Cognitive
               </span>
               <p className="text-slate-400 font-bold text-lg">Sound Block Tetris</p>
               <p className="text-slate-500 text-sm leading-relaxed">Train your hearing and focus with musical blocks and cognitive patterns.</p>
-              <h2 className="text-2xl font-black text-white leading-tight">{(t as any).navGame}</h2>
             </div>
 
             <div className="grid grid-cols-2 gap-4 w-full px-6">
@@ -1409,7 +1401,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Report Modal */}
+      {/* Modals */}
       <AnimatePresence>
         {showTetrisGame && (
           <SoundBlockTetris 
@@ -1421,15 +1413,12 @@ export default function App() {
         {showMimiGame && (
           <MimiGame onClose={() => setShowMimiGame(false)} t={t} />
         )}
-
-      <AnimatePresence>
         {showTarotGame && (
           <TarotGame 
             onClose={() => setShowTarotGame(false)}
             lang={lang}
           />
         )}
-      </AnimatePresence>
         {showReportModal && prediction && (
           <motion.div 
             initial={{ opacity: 0 }}

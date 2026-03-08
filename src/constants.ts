@@ -328,7 +328,7 @@ export const translations = {
     grade_Moderate: "중도 난청 (보청기 권장)",
     grade_Severe: "고도 난청 (전문가 상담 필수)",
     grade_Profound: "심도 난청 (즉각적인 조치 필요)",
-    realTimeConsultationPreparing: "실시간 청력상담사 기능이 준비 중입니다.",
+    realTimeConsultationPreparing: "실시간 청력건강상담서비스 준비중입니다.",
     lineToConnect: "라인으로 연결",
     kakaoTalkToConnect: "카카오톡 채널로 연결",
     aboutTitle: "혁신적인 난청 관리 기술 | 엠바고 미디어",

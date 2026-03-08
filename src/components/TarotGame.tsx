@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Sparkles, RefreshCcw, ArrowRight, LayoutGrid } from 'lucide-react';
+import { cn } from '../utils/cn';
 
 interface TarotCard {
   id: number;
@@ -93,14 +94,18 @@ const TarotGame: React.FC<TarotGameProps> = ({ onClose, lang }) => {
   };
 
   const handlePickCard = (card: TarotCard) => {
-    if (selectedCards.length >= 3 || selectedCards.find(c => c.id === card.id)) return;
-    
-    const newSelected = [...selectedCards, card];
-    setSelectedCards(newSelected);
-    
-    if (newSelected.length === 3) {
-      setTimeout(() => setGameState('result'), 800);
+    if (selectedCards.find(c => c.id === card.id)) {
+      setSelectedCards(selectedCards.filter(c => c.id !== card.id));
+      return;
     }
+    if (selectedCards.length >= 3) return;
+    
+    setSelectedCards([...selectedCards, card]);
+  };
+
+  const handleConfirmSelection = () => {
+    if (selectedCards.length === 0) return;
+    setGameState('result');
   };
 
   return (
@@ -217,50 +222,81 @@ const TarotGame: React.FC<TarotGameProps> = ({ onClose, lang }) => {
                 animate={{ opacity: 1 }}
                 className="w-full flex flex-col items-center gap-8"
               >
-                <div className="text-center space-y-2">
-                  <h2 className="text-3xl font-black text-white">
-                    {lang === 'ko' ? '3장의 카드를 선택하세요' : 'Pick 3 Cards'}
+                <div className="text-center space-y-2 shrink-0">
+                  <h2 className="text-2xl sm:text-3xl font-black text-white">
+                    {lang === 'ko' ? '최대 3장의 카드를 선택하세요' : 'Pick up to 3 Cards'}
                   </h2>
                   <p className="text-brand-gold font-bold">
                     {selectedCards.length} / 3
                   </p>
                 </div>
 
-        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-10 gap-3 max-h-[50vh] overflow-y-auto p-4 custom-scrollbar touch-pan-y">
-                  {shuffledIndices.map((idx) => {
-                    const card = ALL_CARDS[idx];
-                    const isSelected = selectedCards.find(c => c.id === card.id);
-                    return (
-                      <motion.div
-                        key={card.id}
-                        whileHover={{ y: -5, scale: 1.05 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => handlePickCard(card)}
-                        className={`relative aspect-[2/3] rounded-xl cursor-pointer transition-all active:opacity-70 ${
-                          isSelected 
-                            ? 'ring-4 ring-brand-gold opacity-40 grayscale' 
-                            : 'bg-brand-dark-gray border border-white/10 hover:border-brand-gold/50 shadow-lg'
-                        }`}
-                      >
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <Sparkles className={`w-6 h-6 ${isSelected ? 'text-brand-gold' : 'text-white/10'}`} />
-                        </div>
-                      </motion.div>
-                    );
-                  })}
+                <div className="flex-1 w-full overflow-y-auto p-4 custom-scrollbar touch-pan-y relative z-20 min-h-[300px]">
+                  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-10 gap-3">
+                    {shuffledIndices.map((idx) => {
+                      const card = ALL_CARDS[idx];
+                      const isSelected = selectedCards.find(c => c.id === card.id);
+                      const selectionIndex = selectedCards.findIndex(c => c.id === card.id);
+                      return (
+                        <motion.div
+                          key={card.id}
+                          whileHover={{ y: -5, scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onTap={() => handlePickCard(card)}
+                          className={cn(
+                            "relative aspect-[2/3] rounded-xl cursor-pointer transition-all active:opacity-70 z-30 pointer-events-auto select-none touch-manipulation",
+                            isSelected 
+                              ? 'ring-4 ring-brand-gold shadow-[0_0_20px_rgba(197,160,89,0.4)]' 
+                              : 'bg-brand-dark-gray border border-white/10 hover:border-brand-gold/50 shadow-lg'
+                          )}
+                        >
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            {isSelected ? (
+                              <span className="text-brand-gold font-black text-xl">{selectionIndex + 1}</span>
+                            ) : (
+                              <Sparkles className="w-6 h-6 text-white/10" />
+                            )}
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <div className="flex gap-4">
-                  {selectedCards.map((card, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="w-16 h-24 bg-brand-gold/10 border border-brand-gold/30 rounded-xl flex items-center justify-center"
-                    >
-                      <span className="text-brand-gold font-black text-xl">{i + 1}</span>
-                    </motion.div>
-                  ))}
+                <div className="flex flex-col items-center gap-6 shrink-0 py-4">
+                  <div className="flex gap-4">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <motion.div
+                        key={i}
+                        className={cn(
+                          "w-16 h-24 rounded-xl flex items-center justify-center transition-all border",
+                          selectedCards[i] 
+                            ? "bg-brand-gold/20 border-brand-gold shadow-[0_0_15px_rgba(197,160,89,0.2)]" 
+                            : "bg-white/5 border-white/10"
+                        )}
+                      >
+                        {selectedCards[i] ? (
+                          <span className="text-brand-gold font-black text-xl">{i + 1}</span>
+                        ) : (
+                          <div className="w-2 h-2 rounded-full bg-white/10" />
+                        )}
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  <button 
+                    onClick={handleConfirmSelection}
+                    disabled={selectedCards.length === 0}
+                    className={cn(
+                      "px-12 py-5 font-black text-xl rounded-full transition-all flex items-center gap-3",
+                      selectedCards.length > 0
+                        ? "bg-brand-gold text-brand-black shadow-[0_0_30px_rgba(197,160,89,0.4)] hover:scale-105 active:scale-95"
+                        : "bg-white/5 text-slate-600 cursor-not-allowed"
+                    )}
+                  >
+                    {lang === 'ko' ? '결과 보기' : 'See Results'}
+                    <ArrowRight className="w-6 h-6" />
+                  </button>
                 </div>
               </motion.div>
             )}
@@ -294,7 +330,13 @@ const TarotGame: React.FC<TarotGameProps> = ({ onClose, lang }) => {
                         </div>
                         <div className="absolute bottom-4 left-6 right-6">
                           <p className="text-brand-gold text-[10px] font-black uppercase tracking-[0.2em] mb-1">
-                            {i === 0 ? (lang === 'ko' ? '과거' : 'Past') : i === 1 ? (lang === 'ko' ? '현재' : 'Present') : (lang === 'ko' ? '미래' : 'Future')}
+                            {selectedCards.length === 3 ? (
+                              i === 0 ? (lang === 'ko' ? '과거' : 'Past') : 
+                              i === 1 ? (lang === 'ko' ? '현재' : 'Present') : 
+                              (lang === 'ko' ? '미래' : 'Future')
+                            ) : (
+                              lang === 'ko' ? `카드 ${i + 1}` : `Card ${i + 1}`
+                            )}
                           </p>
                           <h3 className="text-xl font-black text-white uppercase tracking-tight">
                             {lang === 'ko' ? card.nameKo : card.name}
