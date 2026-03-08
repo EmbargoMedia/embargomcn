@@ -24,6 +24,7 @@ import {
   Search,
   User as UserIcon,
   ArrowLeft,
+  ChevronLeft,
   MessageCircle,
   Link as LinkIcon,
   Heart,
@@ -1266,51 +1267,60 @@ export default function App() {
 
             {step === 'ask-age' && (
               <div className="space-y-4 w-full">
-                <div className="space-y-3">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-2">{(t as any).nameLabel}</label>
+                <div className="flex items-center gap-4 mb-2">
+                  <button 
+                    onClick={() => setStep('welcome')}
+                    className="p-2 rounded-full bg-brand-dark-gray border border-brand-border text-slate-400 hover:text-white transition-all"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <h2 className="text-xl font-bold text-white">{(t as any).infoInputTitle || '정보 입력'}</h2>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">{(t as any).nameLabel}</label>
                   <input 
                     type="text" 
                     placeholder={(t as any).namePlaceholder}
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full py-5 px-6 rounded-2xl bg-brand-black border border-brand-border text-white font-bold text-lg focus:outline-none focus:border-brand-gold transition-all"
+                    className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
                   />
                 </div>
-                <div className="space-y-3">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-2">{(t as any).ageLabel}</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">{(t as any).ageLabel}</label>
                   <input 
                     type="number" 
                     placeholder={(t as any).agePlaceholder}
                     value={formData.age}
                     onChange={(e) => setFormData(prev => ({ ...prev, age: e.target.value }))}
-                    className="w-full py-5 px-6 rounded-2xl bg-brand-black border border-brand-border text-white font-bold text-lg focus:outline-none focus:border-brand-gold transition-all"
+                    className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
                   />
                 </div>
-                <div className="space-y-3">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-2">{(t as any).phoneLabel}</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">{(t as any).phoneLabel}</label>
                   <input 
                     type="tel" 
                     placeholder="010-0000-0000"
                     value={formData.phone}
                     onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                    className="w-full py-5 px-6 rounded-2xl bg-brand-black border border-brand-border text-white font-bold text-lg focus:outline-none focus:border-brand-gold transition-all"
+                    className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
                   />
                 </div>
-                <div className="space-y-3">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-2">{(t as any).emailLabel}</label>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">{(t as any).emailLabel}</label>
                   <input 
                     type="email" 
                     placeholder="example@email.com"
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full py-5 px-6 rounded-2xl bg-brand-black border border-brand-border text-white font-bold text-lg focus:outline-none focus:border-brand-gold transition-all"
+                    className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
                   />
                 </div>
                 <button 
                   disabled={!formData.name || !formData.age || !formData.phone || !formData.email}
                   onClick={() => handleAction('set-age')}
                   className={cn(
-                    "w-full py-6 rounded-2xl font-bold text-xl transition-all mt-4",
+                    "w-full py-4 rounded-xl font-bold text-lg transition-all mt-4",
                     (!formData.name || !formData.age || !formData.phone || !formData.email)
                       ? "bg-brand-dark-gray text-slate-600 cursor-not-allowed"
                       : "bg-brand-gold text-brand-black shadow-lg shadow-brand-gold/20"
@@ -1329,18 +1339,36 @@ export default function App() {
             )}
 
             {step === 'ask-age-group' && (
-              <div className="grid grid-cols-1 gap-4">
-                <button onClick={() => handleAction('set-age-group', 'youth')} className="action-button-hospital py-5 text-lg">{(t as any).youth}</button>
-                <button onClick={() => handleAction('set-age-group', 'adult')} className="action-button-hospital py-5 text-lg">{(t as any).adult}</button>
-                <button onClick={() => handleAction('set-age-group', 'senior')} className="action-button-hospital py-5 text-lg">{(t as any).senior}</button>
+              <div className="grid grid-cols-1 gap-4 w-full">
+                <div className="flex items-center gap-4 mb-2">
+                  <button 
+                    onClick={() => setStep('ask-age')}
+                    className="p-2 rounded-full bg-brand-dark-gray border border-brand-border text-slate-400 hover:text-white transition-all"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <h2 className="text-xl font-bold text-white">{(t as any).ageGroupTitle || '연령대 선택'}</h2>
+                </div>
+                <button onClick={() => handleAction('set-age-group', 'youth')} className="action-button-hospital py-4 text-base">{(t as any).youth}</button>
+                <button onClick={() => handleAction('set-age-group', 'adult')} className="action-button-hospital py-4 text-base">{(t as any).adult}</button>
+                <button onClick={() => handleAction('set-age-group', 'senior')} className="action-button-hospital py-4 text-base">{(t as any).senior}</button>
               </div>
             )}
 
             {step === 'questionnaire-intro' && (
               <div className="space-y-4 w-full">
+                <div className="flex items-center gap-4 mb-2">
+                  <button 
+                    onClick={() => setStep('ask-age-group')}
+                    className="p-2 rounded-full bg-brand-dark-gray border border-brand-border text-slate-400 hover:text-white transition-all"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <h2 className="text-xl font-bold text-white">{(t as any).questionnaireIntroTitle || '문항 검사 안내'}</h2>
+                </div>
                 <button 
                   onClick={() => handleAction('start-questionnaire')}
-                  className="action-button-hospital w-full bg-brand-gold text-brand-black border-none py-6 text-xl"
+                  className="action-button-hospital w-full bg-brand-gold text-brand-black border-none py-5 text-lg"
                 >
                   <Send className="w-6 h-6" />
                   {(t as any).startQuestionnaire}
@@ -1577,7 +1605,7 @@ export default function App() {
       </AnimatePresence>
 
       {/* Bottom Navigation Bar */}
-      <nav className="w-full max-w-md bg-brand-dark-gray/60 backdrop-blur-xl border-t border-brand-border px-6 py-6 flex justify-between items-center z-50 sticky bottom-0">
+      <nav className="w-full max-w-md bg-brand-dark-gray/60 backdrop-blur-xl border-t border-brand-border px-6 py-3 flex justify-between items-center z-50 sticky bottom-0">
         {[
           { id: 'welfare', icon: Search, label: (t as any).navWelfare },
           { id: 'hearing', icon: Ear, label: (t as any).navHearing },
@@ -1596,20 +1624,20 @@ export default function App() {
               }
             }}
             className={cn(
-              "flex flex-col items-center gap-2 transition-all flex-1",
+              "flex flex-col items-center gap-1 transition-all flex-1",
               activeTab === tab.id ? "text-brand-gold" : "text-slate-500 hover:text-slate-300"
             )}
           >
-            <tab.icon className={cn("w-8 h-8", activeTab === tab.id && "animate-pulse")} />
-            <span className="text-[13px] font-bold tracking-tight">{tab.label}</span>
+            <tab.icon className={cn("w-6 h-6", activeTab === tab.id && "animate-pulse")} />
+            <span className="text-[11px] font-bold tracking-tight">{tab.label}</span>
           </button>
         ))}
       </nav>
       
       {/* Home Indicator Simulation */}
-      <div className="w-full max-w-md bg-brand-dark-gray/60 backdrop-blur-xl pb-4 flex flex-col items-center gap-4 z-50">
+      <div className="w-full max-w-md bg-brand-dark-gray/60 backdrop-blur-xl pb-2 flex flex-col items-center gap-2 z-50">
         <div className="w-32 h-1 bg-brand-border rounded-full" />
-        <div className="text-[10px] text-slate-600 font-medium tracking-tight">
+        <div className="text-[9px] text-slate-600 font-medium tracking-tight">
           Copyright OBLIGE, INC 2026
         </div>
       </div>

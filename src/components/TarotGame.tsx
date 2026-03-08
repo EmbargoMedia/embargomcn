@@ -77,7 +77,7 @@ const TarotGame: React.FC<TarotGameProps> = ({ onClose, lang }) => {
 
   useEffect(() => {
     // Initial shuffle
-    const indices = Array.from({ length: 78 }, (_, i) => i);
+    const indices = Array.from({ length: 26 }, (_, i) => i);
     setShuffledIndices(indices.sort(() => Math.random() - 0.5));
   }, []);
 
@@ -87,7 +87,7 @@ const TarotGame: React.FC<TarotGameProps> = ({ onClose, lang }) => {
     
     // Animate shuffle
     setTimeout(() => {
-      const indices = Array.from({ length: 78 }, (_, i) => i);
+      const indices = Array.from({ length: 26 }, (_, i) => i);
       setShuffledIndices(indices.sort(() => Math.random() - 0.5));
       setGameState('picking');
     }, 2000);
@@ -167,8 +167,8 @@ const TarotGame: React.FC<TarotGameProps> = ({ onClose, lang }) => {
                   </h2>
                   <p className="text-slate-400 max-w-sm mx-auto">
                     {lang === 'ko' 
-                      ? '78장의 카드가 당신의 질문에 답하기 위해 기다리고 있습니다. 카드를 눌러 셔플을 시작하세요.' 
-                      : '78 cards are waiting to answer your questions. Click the deck to start shuffling.'}
+                      ? '26장의 카드가 당신의 질문에 답하기 위해 기다리고 있습니다. 카드를 눌러 셔플을 시작하세요.' 
+                      : '26 cards are waiting to answer your questions. Click the deck to start shuffling.'}
                   </p>
                   <button 
                     onClick={handleStartShuffle}
