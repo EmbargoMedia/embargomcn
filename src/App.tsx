@@ -100,6 +100,7 @@ export default function App() {
     existingHearingIssues: false,
   });
   
+  const [isUIVisible, setIsUIVisible] = useState(true);
   const [ptaIndex, setPtaIndex] = useState(0);
   const [currentDb, setCurrentDb] = useState(40);
   const [ptaResults, setPtaResults] = useState<{ frequency: number; threshold: number }[]>([]);
@@ -717,7 +718,12 @@ export default function App() {
       </AnimatePresence>
 
       {/* Header */}
-      <header className="w-full max-w-md bg-brand-dark-gray/40 backdrop-blur-xl border-b border-brand-white/10 px-6 py-5 flex items-center justify-between sticky top-0 z-50">
+      <motion.header 
+        initial={false}
+        animate={{ y: isUIVisible ? 0 : -100 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        className="w-full max-w-md bg-brand-dark-gray/40 backdrop-blur-xl border-b border-brand-white/10 px-6 py-5 flex items-center justify-between sticky top-0 z-50"
+      >
         <button 
           onClick={resetApp}
           className="flex items-center gap-2 hover:opacity-80 transition-opacity active:scale-95"
@@ -733,11 +739,20 @@ export default function App() {
             <Globe className="w-4 h-4" />
             {lang === 'ko' ? 'EN' : 'KO'}
           </button>
+          <button 
+            onClick={() => setIsUIVisible(false)}
+            className="p-2 rounded-full bg-white/5 text-slate-400 hover:text-white transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-      </header>
+      </motion.header>
 
       {/* Chat Area */}
-      <main className="flex-1 w-full max-w-md overflow-y-auto p-6 space-y-6 scrollbar-hide pb-64">
+      <main className={cn(
+        "flex-1 w-full max-w-md overflow-y-auto p-6 space-y-6 scrollbar-hide transition-all duration-500",
+        isUIVisible ? "pb-64" : "pb-20"
+      )}>
         {activeTab === 'hearing' ? (
           <AnimatePresence initial={false}>
             {messages.map((msg) => (
@@ -1558,7 +1573,12 @@ export default function App() {
       </AnimatePresence>
 
       {/* Bottom Navigation Bar */}
-      <nav className="w-full max-w-md bg-brand-dark-gray/60 backdrop-blur-xl border-t border-brand-border px-6 py-6 flex justify-between items-center z-50 sticky bottom-0">
+      <motion.nav 
+        initial={false}
+        animate={{ y: isUIVisible ? 0 : 120 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        className="w-full max-w-md bg-brand-dark-gray/60 backdrop-blur-xl border-t border-brand-border px-6 py-6 flex justify-between items-center z-50 sticky bottom-0"
+      >
         {[
           { id: 'welfare', icon: Search, label: (t as any).navWelfare },
           { id: 'hearing', icon: Ear, label: (t as any).navHearing },
@@ -1585,15 +1605,35 @@ export default function App() {
             <span className="text-[13px] font-bold tracking-tight">{tab.label}</span>
           </button>
         ))}
-      </nav>
-      
+      </motion.nav>
+
+      {/* Bottom Trigger Area when UI is hidden */}
+      {!isUIVisible && (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          onClick={() => setIsUIVisible(true)}
+          className="fixed bottom-0 left-0 right-0 h-16 z-[55] cursor-pointer flex flex-col items-center justify-center group bg-gradient-to-t from-black/80 to-transparent"
+        >
+          <div className="w-12 h-1 bg-white/30 rounded-full group-hover:bg-brand-gold/60 transition-all group-hover:w-16 mb-2" />
+          <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] group-hover:text-brand-gold transition-colors">
+            {lang === 'ko' ? '메뉴 표시' : 'Show Menu'}
+          </span>
+        </motion.div>
+      )}
+
       {/* Home Indicator Simulation */}
-      <div className="w-full max-w-md bg-brand-dark-gray/60 backdrop-blur-xl pb-4 flex flex-col items-center gap-4 z-50">
+      <motion.div 
+        initial={false}
+        animate={{ y: isUIVisible ? 0 : 120 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        className="w-full max-w-md bg-brand-dark-gray/60 backdrop-blur-xl pb-4 flex flex-col items-center gap-4 z-50"
+      >
         <div className="w-32 h-1 bg-brand-border rounded-full" />
         <div className="text-[10px] text-slate-600 font-medium tracking-tight">
           Copyright OBLIGE, INC 2026
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
