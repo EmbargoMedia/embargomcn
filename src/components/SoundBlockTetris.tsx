@@ -144,6 +144,9 @@ export default function SoundBlockTetris({ onClose, language, translations: t }:
     source.buffer = buffer;
     source.connect(ctx.destination);
     source.start(0);
+
+    // Play a confirmation tone
+    await playTone(880, 0.1, 'sine', 0.5);
   };
 
   const playTone = useCallback(async (freq: number, duration: number = 0.2, type: OscillatorType = 'sine', volumeMult: number = 1) => {
@@ -578,9 +581,17 @@ export default function SoundBlockTetris({ onClose, language, translations: t }:
 
                 <button 
                   onClick={startGame}
-                  className="w-full py-5 rounded-[24px] bg-brand-gold text-brand-black font-black text-xl shadow-2xl shadow-brand-gold/30 hover:scale-105 active:scale-95 transition-all"
+                  className="w-full py-5 rounded-[24px] bg-brand-gold text-brand-black font-black text-xl shadow-2xl shadow-brand-gold/30 hover:scale-105 active:scale-95 transition-all mb-4"
                 >
                   INITIALIZE SESSION
+                </button>
+
+                <button 
+                  onClick={initAudio}
+                  className="text-slate-500 text-xs font-bold flex items-center gap-2 hover:text-brand-gold transition-colors"
+                >
+                  <Volume2 className="w-4 h-4" />
+                  {language === 'ko' ? '사운드 테스트' : 'Sound Test'}
                 </button>
               </motion.div>
             )}

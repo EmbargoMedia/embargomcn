@@ -282,30 +282,35 @@ export default function App() {
   };
 
   const playTone = async (freq: number, db: number) => {
-    if (!audioContext.current) return;
+    if (!audioContext.current) {
+      await initAudio();
+    }
     
-    if (audioContext.current.state === 'suspended') {
-      await audioContext.current.resume();
+    const ctx = audioContext.current!;
+    if (ctx.state === 'suspended') {
+      await ctx.resume();
     }
 
     if (oscillator.current) {
-      oscillator.current.stop();
-      oscillator.current.disconnect();
+      try {
+        oscillator.current.stop();
+        oscillator.current.disconnect();
+      } catch (e) {}
     }
 
-    const ctx = audioContext.current;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
 
     osc.type = 'sine';
     osc.frequency.setValueAtTime(freq, ctx.currentTime);
 
-    // Simplified dB to gain mapping
-    // 0dB = 0.001, 100dB = 1.0
-    const volume = Math.pow(10, (db - 100) / 40); 
+    // Standard dB to gain mapping
+    // 0dB HL is not 0 gain, but a reference level.
+    // For screening, we use a simplified mapping that ensures audibility.
+    const volume = Math.pow(10, (db - 80) / 20); 
     gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(volume, ctx.currentTime + 0.1);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.5);
+    gain.gain.linearRampToValueAtTime(volume, ctx.currentTime + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
 
     osc.connect(gain);
     gain.connect(ctx.destination);
@@ -316,10 +321,17 @@ export default function App() {
 
     setTimeout(() => {
       if (oscillator.current === osc) {
-        osc.stop();
-        osc.disconnect();
+        try {
+          osc.stop();
+          osc.disconnect();
+        } catch (e) {}
       }
-    }, 1600);
+    }, 1500);
+  };
+
+  const testSound = async () => {
+    await initAudio();
+    await playTone(1000, 70);
   };
 
   const calculateHearingAge = (score: number, actualAge: number) => {
@@ -534,6 +546,7 @@ export default function App() {
       case 'others':
         addUserMessage(t.others);
         addBotMessage((t as any).realTimeConsultationPreparing);
+        setStep('others-links');
         break;
     }
   };
@@ -675,6 +688,17 @@ export default function App() {
         >
           <Ear className="w-7 h-7" />
           {(t as any).landingBtn}
+        </motion.button>
+
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2 }}
+          onClick={testSound}
+          className="text-slate-500 text-sm font-bold flex items-center gap-2 hover:text-brand-gold transition-colors"
+        >
+          <Volume2 className="w-4 h-4" />
+          {lang === 'ko' ? '사운드 테스트 (소리가 들리는지 확인하세요)' : 'Sound Test (Check if you can hear sound)'}
         </motion.button>
       </div>
     );
@@ -1197,7 +1221,7 @@ export default function App() {
             )}
 
             {step === 'others-links' && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <button 
                   onClick={() => window.open('https://line.me', '_blank')}
                   className="w-full py-5 rounded-2xl bg-[#06C755] text-white font-black flex items-center justify-center gap-3 shadow-lg hover:brightness-110 transition-all"
