@@ -50,7 +50,7 @@ import {
 import Markdown from 'react-markdown';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { predictHearingRisk, HearingData } from './services/aiService';
+import { predictHearingRisk, HearingData, analyzeLifeRhythm } from './services/aiService';
 import MimiGame from './components/MimiGame';
 import { generateLandingImage } from './services/imageService';
 import SoundBlockTetris from './components/SoundBlockTetris';
@@ -88,6 +88,10 @@ export default function App() {
   const [isTyping, setIsTyping] = useState(false);
   const [step, setStep] = useState<string>('welcome');
   const [showWelfareFinder, setShowWelfareFinder] = useState(false);
+  const [showLifeRhythmReport, setShowLifeRhythmReport] = useState(false);
+  const [lifeRhythmResult, setLifeRhythmResult] = useState<any>(null);
+  const [isAnalyzingLifeRhythm, setIsAnalyzingLifeRhythm] = useState(false);
+  const lifeRhythmReportRef = useRef<HTMLDivElement>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -99,6 +103,8 @@ export default function App() {
     noiseExposure: false,
     tinnitus: false,
     existingHearingIssues: false,
+    birthDate: '',
+    birthTime: '',
   });
   
   const [ptaIndex, setPtaIndex] = useState(0);
@@ -549,6 +555,42 @@ export default function App() {
         addBotMessage((t as any).realTimeConsultationPreparing);
         setStep('others-links');
         break;
+
+      case 'life-rhythm-start':
+        addUserMessage((t as any).lifeRhythmTitle);
+        setStep('life-rhythm-ask-info');
+        addBotMessage("라이프리듬 분석을 위해 이름, 생년월일, 출생시간을 입력해주세요.");
+        break;
+
+      case 'life-rhythm-analyze':
+        addUserMessage(`이름: ${formData.name}, 생년월일: ${formData.birthDate}, 출생시간: ${formData.birthTime}`);
+        setIsTyping(true);
+        setIsAnalyzingLifeRhythm(true);
+        addBotMessage("에너지 패턴과 라이프 리듬을 분석 중입니다. 잠시만 기다려주세요...");
+        
+        try {
+          const rhythmResult = await analyzeLifeRhythm({
+            name: formData.name,
+            birthDate: formData.birthDate,
+            birthTime: formData.birthTime
+          });
+          
+          if (rhythmResult) {
+            setLifeRhythmResult(rhythmResult);
+            setShowLifeRhythmReport(true);
+            addBotMessage("라이프리듬 분석 레포트가 생성되었습니다. 화면에서 확인하실 수 있습니다.");
+          } else {
+            addBotMessage("분석 결과를 가져오지 못했습니다. 다시 시도해주세요.");
+          }
+        } catch (error) {
+          console.error("Life Rhythm Analysis Error:", error);
+          addBotMessage("분석 중 오류가 발생했습니다.");
+        } finally {
+          setIsTyping(false);
+          setIsAnalyzingLifeRhythm(false);
+          setStep('welcome');
+        }
+        break;
     }
   };
 
@@ -574,6 +616,8 @@ export default function App() {
       noiseExposure: false,
       tinnitus: false,
       existingHearingIssues: false,
+      birthDate: '',
+      birthTime: '',
     });
   };
 
@@ -1131,54 +1175,56 @@ export default function App() {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col items-center justify-center text-center space-y-8 pt-32 pb-20"
+            className="flex flex-col items-center justify-center text-center space-y-8 pt-24 pb-20"
           >
-            <div className="space-y-4 px-6">
-              <h2 className="text-2xl font-black text-white leading-tight mb-2">{(t as any).navGame}</h2>
-              <span className="px-4 py-1 bg-brand-gold/10 text-brand-gold text-[10px] font-black rounded-full uppercase tracking-[0.3em] border border-brand-gold/20">
-                Auditory Cognitive
-              </span>
-              <p className="text-slate-400 font-bold text-lg">Sound Block Tetris</p>
-              <p className="text-slate-500 text-sm leading-relaxed">Train your hearing and focus with musical blocks and cognitive patterns.</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 w-full px-6">
-              <div className="bg-brand-dark-gray/40 p-6 rounded-3xl border border-brand-border text-center space-y-2">
-                <Music className="w-6 h-6 text-brand-gold mx-auto" />
-                <p className="text-xs font-bold text-white">Musical Blocks</p>
+            {/* Hearing Games Section */}
+            <div className="w-full space-y-6">
+              <div className="space-y-3 px-6">
+                <h2 className="text-2xl font-black text-white leading-tight">{(t as any).navGame}</h2>
+                <span className="px-4 py-1 bg-brand-gold/10 text-brand-gold text-[10px] font-black rounded-full uppercase tracking-[0.3em] border border-brand-gold/20">
+                  Auditory Cognitive
+                </span>
+                <p className="text-slate-500 text-sm leading-relaxed">Train your hearing and focus with musical blocks and cognitive patterns.</p>
               </div>
-              <div className="bg-brand-dark-gray/40 p-6 rounded-3xl border border-brand-border text-center space-y-2">
-                <Zap className="w-6 h-6 text-brand-gold mx-auto" />
-                <p className="text-xs font-bold text-white">Cognitive Focus</p>
+
+              <div className="grid grid-cols-2 gap-4 w-full px-6">
+                <div className="bg-brand-dark-gray/40 p-6 rounded-3xl border border-brand-border text-center space-y-2">
+                  <Music className="w-6 h-6 text-brand-gold mx-auto" />
+                  <p className="text-xs font-bold text-white">Musical Blocks</p>
+                </div>
+                <div className="bg-brand-dark-gray/40 p-6 rounded-3xl border border-brand-border text-center space-y-2">
+                  <Zap className="w-6 h-6 text-brand-gold mx-auto" />
+                  <p className="text-xs font-bold text-white">Cognitive Focus</p>
+                </div>
               </div>
-            </div>
 
-            <div className="w-full px-6 space-y-3">
-              <button 
-                onClick={() => {
-                  setShowTarotGame(true);
-                }}
-                className="w-full py-6 rounded-[32px] bg-brand-gold/10 border border-brand-gold/40 text-brand-gold font-black text-xl shadow-xl hover:bg-brand-gold/20 transition-all flex items-center justify-center gap-4 group overflow-hidden relative"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-brand-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <Sparkles className="w-8 h-8 animate-pulse" />
-                <div className="text-left">
-                  <p className="leading-none mb-1">{lang === 'ko' ? '타로 청각 게임' : 'Tarot Auditory Game'}</p>
-                  <p className="text-[10px] uppercase tracking-[0.2em] opacity-60">AI Tarot + Hearing Mission</p>
-                </div>
-              </button>
+              <div className="w-full px-6 space-y-3">
+                <button 
+                  onClick={() => {
+                    setShowTarotGame(true);
+                  }}
+                  className="w-full py-6 rounded-[32px] bg-brand-gold/10 border border-brand-gold/40 text-brand-gold font-black text-xl shadow-xl hover:bg-brand-gold/20 transition-all flex items-center justify-center gap-4 group overflow-hidden relative"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-brand-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <Sparkles className="w-8 h-8 animate-pulse" />
+                  <div className="text-left">
+                    <p className="leading-none mb-1">{lang === 'ko' ? '타로 청각 게임' : 'Tarot Auditory Game'}</p>
+                    <p className="text-[10px] uppercase tracking-[0.2em] opacity-60">AI Tarot + Hearing Mission</p>
+                  </div>
+                </button>
 
-              <button 
-                onClick={() => setShowTetrisGame(true)}
-                className="w-full py-6 rounded-[32px] bg-brand-gold text-brand-black font-black text-2xl shadow-2xl shadow-brand-gold/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-1 group relative overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-                <div className="flex items-center gap-3 relative z-10">
-                  <Play className="w-8 h-8 fill-current" />
-                  <span>Sound Block Tetris</span>
-                </div>
-                <span className="text-[10px] uppercase tracking-[0.2em] opacity-60 relative z-10">Auditory Cognitive Training</span>
-              </button>
+                <button 
+                  onClick={() => setShowTetrisGame(true)}
+                  className="w-full py-6 rounded-[32px] bg-brand-gold text-brand-black font-black text-2xl shadow-2xl shadow-brand-gold/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-1 group relative overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+                  <div className="flex items-center gap-3 relative z-10">
+                    <Play className="w-8 h-8 fill-current" />
+                    <span>Sound Block Tetris</span>
+                  </div>
+                  <span className="text-[10px] uppercase tracking-[0.2em] opacity-60 relative z-10">Auditory Cognitive Training</span>
+                </button>
+              </div>
             </div>
           </motion.div>
         ) : (
@@ -1210,55 +1256,118 @@ export default function App() {
         <div ref={chatEndRef} />
       </main>
 
-      {/* Floating Action Area */}
+      {/* Floating Action Area - Positioned above Bottom Nav */}
       {activeTab === 'hearing' && (
-        <div className="w-full max-w-md bg-brand-dark-gray/40 backdrop-blur-2xl border-t border-brand-white/10 p-8 space-y-6 absolute bottom-40 z-50 rounded-t-[40px] shadow-[0_-20px_40px_rgba(0,0,0,0.4)] max-h-[70vh] overflow-y-auto scrollbar-hide">
-          <div className="flex flex-col gap-4">
+        <div className="w-full max-w-md bg-brand-dark-gray/60 backdrop-blur-xl border border-brand-border p-6 space-y-4 absolute bottom-[120px] z-[60] rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] max-h-[60vh] overflow-y-auto scrollbar-hide mx-auto left-0 right-0">
+          <div className="flex flex-col gap-3">
             {step === 'welcome' && (
               <>
                 <button 
                   onClick={() => handleAction('start-test')}
-                  className="action-button-hospital py-5 text-lg"
+                  className="action-button-hospital py-4 text-base"
                 >
-                  <Stethoscope className="w-6 h-6 text-brand-gold" />
+                  <Stethoscope className="w-5 h-5" />
                   {t.startTest}
                 </button>
                 <button 
-                  onClick={() => setActiveTab('game')}
-                  className="action-button-hospital py-5 text-lg"
+                  onClick={() => handleAction('life-rhythm-start')}
+                  className="action-button-hospital py-4 text-base"
                 >
-                  <Music className="w-6 h-6 text-brand-gold" />
+                  <Activity className="w-5 h-5 text-emerald-500" />
+                  {(t as any).lifeRhythmTitle}
+                </button>
+                <button 
+                  onClick={() => setActiveTab('game')}
+                  className="action-button-hospital py-4 text-base"
+                >
+                  <Music className="w-5 h-5" />
                   {(t as any).navGame}
                 </button>
                 <button 
                   onClick={() => handleAction('others')}
-                  className="action-button-hospital py-5 text-base w-full"
+                  className="action-button-hospital py-4 text-sm w-full border-none bg-transparent hover:bg-white/5"
                 >
-                  <MoreHorizontal className="w-6 h-6 text-slate-500" />
+                  <MoreHorizontal className="w-5 h-5" />
                   {t.others}
                 </button>
               </>
             )}
 
+            {step === 'life-rhythm-ask-info' && (
+              <div className="space-y-4 w-full">
+                <div className="flex items-center gap-4 mb-2">
+                  <button 
+                    onClick={() => setStep('welcome')}
+                    className="p-2 rounded-full bg-brand-dark-gray border border-brand-border text-slate-400 hover:text-white transition-all"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <h2 className="text-xl font-bold text-white">라이프리듬 정보 입력</h2>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">이름</label>
+                  <input 
+                    type="text" 
+                    placeholder="이름을 입력하세요"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">생년월일</label>
+                  <input 
+                    type="text" 
+                    placeholder="YYYY-MM-DD"
+                    value={formData.birthDate}
+                    onChange={(e) => setFormData(prev => ({ ...prev, birthDate: e.target.value }))}
+                    className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">출생시간</label>
+                  <input 
+                    type="text" 
+                    placeholder="HH:MM (모를 경우 '모름' 입력)"
+                    value={formData.birthTime}
+                    onChange={(e) => setFormData(prev => ({ ...prev, birthTime: e.target.value }))}
+                    className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
+                  />
+                </div>
+                <button 
+                  disabled={!formData.name || !formData.birthDate || !formData.birthTime}
+                  onClick={() => handleAction('life-rhythm-analyze')}
+                  className={cn(
+                    "w-full py-4 rounded-xl font-bold text-lg transition-all mt-4",
+                    (!formData.name || !formData.birthDate || !formData.birthTime)
+                      ? "bg-brand-dark-gray text-slate-600 cursor-not-allowed"
+                      : "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                  )}
+                >
+                  분석 시작하기
+                </button>
+              </div>
+            )}
+
             {step === 'others-links' && (
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 <button 
                   onClick={() => window.open('https://line.me', '_blank')}
-                  className="w-full py-5 rounded-2xl bg-[#06C755] text-white font-black flex items-center justify-center gap-3 shadow-lg hover:brightness-110 transition-all"
+                  className="w-full py-4 rounded-xl bg-[#06C755] text-white font-black flex items-center justify-center gap-3 shadow-lg hover:brightness-110 transition-all text-base"
                 >
-                  <MessageSquare className="w-6 h-6 fill-current" />
+                  <MessageSquare className="w-5 h-5 fill-current" />
                   {(t as any).lineToConnect}
                 </button>
                 <button 
                   onClick={() => window.open('https://pf.kakao.com', '_blank')}
-                  className="w-full py-5 rounded-2xl bg-[#FEE500] text-[#3C1E1E] font-black flex items-center justify-center gap-3 shadow-lg hover:brightness-110 transition-all"
+                  className="w-full py-4 rounded-xl bg-[#FEE500] text-[#3C1E1E] font-black flex items-center justify-center gap-3 shadow-lg hover:brightness-110 transition-all text-base"
                 >
-                  <MessageCircle className="w-6 h-6 fill-current" />
+                  <MessageCircle className="w-5 h-5 fill-current" />
                   {(t as any).kakaoTalkToConnect}
                 </button>
                 <button 
                   onClick={() => setStep('welcome')}
-                  className="w-full py-4 rounded-2xl bg-brand-black/40 backdrop-blur-sm border border-brand-border text-slate-500 font-bold text-sm hover:bg-brand-gold/5 transition-all"
+                  className="w-full py-3 rounded-xl bg-brand-black/40 backdrop-blur-sm border border-brand-border text-slate-500 font-bold text-xs hover:bg-brand-gold/5 transition-all"
                 >
                   {t.backToList}
                 </button>
@@ -1333,13 +1442,13 @@ export default function App() {
 
             {step === 'ask-gender' && (
               <div className="grid grid-cols-2 gap-4">
-                <button onClick={() => handleAction('set-gender', 'male')} className="action-button-hospital py-5 text-lg">{t.male}</button>
-                <button onClick={() => handleAction('set-gender', 'female')} className="action-button-hospital py-5 text-lg">{t.female}</button>
+                <button onClick={() => handleAction('set-gender', 'male')} className="action-button-hospital py-4 text-base">{t.male}</button>
+                <button onClick={() => handleAction('set-gender', 'female')} className="action-button-hospital py-4 text-base">{t.female}</button>
               </div>
             )}
 
             {step === 'ask-age-group' && (
-              <div className="grid grid-cols-1 gap-4 w-full">
+              <div className="grid grid-cols-1 gap-3 w-full">
                 <div className="flex items-center gap-4 mb-2">
                   <button 
                     onClick={() => setStep('ask-age')}
@@ -1349,9 +1458,9 @@ export default function App() {
                   </button>
                   <h2 className="text-xl font-bold text-white">{(t as any).ageGroupTitle || '연령대 선택'}</h2>
                 </div>
-                <button onClick={() => handleAction('set-age-group', 'youth')} className="action-button-hospital py-4 text-base">{(t as any).youth}</button>
-                <button onClick={() => handleAction('set-age-group', 'adult')} className="action-button-hospital py-4 text-base">{(t as any).adult}</button>
-                <button onClick={() => handleAction('set-age-group', 'senior')} className="action-button-hospital py-4 text-base">{(t as any).senior}</button>
+                <button onClick={() => handleAction('set-age-group', 'youth')} className="action-button-hospital py-3.5 text-base">{(t as any).youth}</button>
+                <button onClick={() => handleAction('set-age-group', 'adult')} className="action-button-hospital py-3.5 text-base">{(t as any).adult}</button>
+                <button onClick={() => handleAction('set-age-group', 'senior')} className="action-button-hospital py-3.5 text-base">{(t as any).senior}</button>
               </div>
             )}
 
@@ -1368,14 +1477,14 @@ export default function App() {
                 </div>
                 <button 
                   onClick={() => handleAction('start-questionnaire')}
-                  className="action-button-hospital w-full bg-brand-gold text-brand-black border-none py-5 text-lg"
+                  className="action-button-hospital w-full bg-brand-gold text-brand-black border-none py-4 text-base"
                 >
-                  <Send className="w-6 h-6" />
+                  <Send className="w-5 h-5" />
                   {(t as any).startQuestionnaire}
                 </button>
                 <button 
                   onClick={() => handleAction('pta-intro-next')}
-                  className="w-full py-4 text-slate-500 font-bold text-sm hover:text-white transition-colors"
+                  className="w-full py-3 text-slate-500 font-bold text-xs hover:text-white transition-colors"
                 >
                   {(t as any).skipQuestionnaire}
                 </button>
@@ -1471,6 +1580,230 @@ export default function App() {
             onClose={() => setShowTarotGame(false)}
             lang={lang}
           />
+        )}
+        {showLifeRhythmReport && lifeRhythmResult && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 bg-black/80 backdrop-blur-sm no-print"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="w-full max-w-4xl max-h-[90vh] bg-white shadow-2xl rounded-[32px] overflow-hidden border border-slate-200 flex flex-col"
+            >
+              {/* Modal Header */}
+              <div className="bg-emerald-900 p-6 md:p-8 text-white flex justify-between items-center shrink-0">
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase">라이프리듬 분석 레포트</h1>
+                  <p className="text-emerald-200 text-sm">AI Wellness & Energy Analysis</p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right hidden md:block">
+                    <p className="text-emerald-400 text-[10px] uppercase font-bold tracking-widest">Date</p>
+                    <p className="font-bold text-sm">{new Date().toLocaleDateString()}</p>
+                  </div>
+                  <button 
+                    onClick={() => setShowLifeRhythmReport(false)}
+                    className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Content */}
+              <div id="life-rhythm-report-content" className="flex-1 overflow-y-auto p-6 md:p-8 space-y-10 bg-white print:p-0">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                  <div className="bg-emerald-50 p-4 rounded-2xl">
+                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Name</p>
+                    <p className="font-bold text-slate-900">{formData.name || 'User'}</p>
+                  </div>
+                  <div className="bg-emerald-50 p-4 rounded-2xl">
+                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Birth Date</p>
+                    <p className="font-bold text-slate-900">{formData.birthDate || 'N/A'}</p>
+                  </div>
+                  <div className="bg-emerald-50 p-4 rounded-2xl">
+                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Birth Time</p>
+                    <p className="font-bold text-slate-900">{formData.birthTime || 'N/A'}</p>
+                  </div>
+                  <div className="bg-emerald-50 p-4 rounded-2xl">
+                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Analysis Type</p>
+                    <p className="font-bold text-slate-900 uppercase">Wellness</p>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                      <span className="w-1.5 h-6 bg-emerald-600 rounded-full"></span>
+                      1️⃣ 라이프 리듬 요약
+                    </h2>
+                    <div className="bg-emerald-50/50 p-6 rounded-3xl border border-emerald-100">
+                      <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{lifeRhythmResult.summary}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                      <span className="w-1.5 h-6 bg-emerald-600 rounded-full"></span>
+                      2️⃣ 오행 균형 분석
+                    </h2>
+                    <div className="bg-emerald-50/50 p-6 rounded-3xl border border-emerald-100">
+                      <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{lifeRhythmResult.balanceAnalysis}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                      <span className="w-1.5 h-6 bg-emerald-600 rounded-full"></span>
+                      3️⃣ 청각 건강 관리 가이드 (금(金) 요소)
+                    </h2>
+                    <div className="bg-emerald-50/50 p-6 rounded-3xl border border-emerald-100 space-y-4">
+                      <p className="text-slate-700 leading-relaxed">{lifeRhythmResult.hearingGuide.content}</p>
+                      <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {lifeRhythmResult.hearingGuide.tips.map((tip: string, idx: number) => (
+                          <li key={idx} className="flex gap-3 items-center bg-white p-3 rounded-xl border border-emerald-100 text-sm text-slate-600">
+                            <Ear className="w-4 h-4 text-emerald-500 shrink-0" />
+                            {tip}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                      <span className="w-1.5 h-6 bg-emerald-600 rounded-full"></span>
+                      4️⃣ 피부 및 신체 상태 경향
+                    </h2>
+                    <div className="bg-emerald-50/50 p-6 rounded-3xl border border-emerald-100">
+                      <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{lifeRhythmResult.bodyTrend}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                      <span className="w-1.5 h-6 bg-emerald-600 rounded-full"></span>
+                      5️⃣ 체질 관리 가이드
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100">
+                        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-2">추천 운동</p>
+                        <p className="text-sm text-slate-700">{lifeRhythmResult.wellnessGuide.exercise}</p>
+                      </div>
+                      <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100">
+                        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-2">식습관</p>
+                        <p className="text-sm text-slate-700">{lifeRhythmResult.wellnessGuide.diet}</p>
+                      </div>
+                      <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100">
+                        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-2">수면 습관</p>
+                        <p className="text-sm text-slate-700">{lifeRhythmResult.wellnessGuide.sleep}</p>
+                      </div>
+                      <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100">
+                        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-2">스트레스 관리</p>
+                        <p className="text-sm text-slate-700">{lifeRhythmResult.wellnessGuide.stress}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                      <span className="w-1.5 h-6 bg-emerald-600 rounded-full"></span>
+                      6️⃣ 하루 생활 리듬 추천
+                    </h2>
+                    <div className="bg-slate-900 rounded-3xl p-8 text-white space-y-6">
+                      <div className="grid grid-cols-2 gap-8">
+                        <div>
+                          <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest mb-2">집중하기 좋은 시간</p>
+                          <p className="text-xl font-bold">{lifeRhythmResult.dailyRhythm.focusTime}</p>
+                        </div>
+                        <div>
+                          <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest mb-2">휴식이 필요한 시간</p>
+                          <p className="text-xl font-bold">{lifeRhythmResult.dailyRhythm.restTime}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest">건강 유지 습관</p>
+                        <div className="flex flex-wrap gap-2">
+                          {lifeRhythmResult.dailyRhythm.habits.map((habit: string, idx: number) => (
+                            <span key={idx} className="px-3 py-1 bg-white/10 rounded-full text-xs font-medium">{habit}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 bg-slate-50 rounded-[24px] border border-slate-100">
+                  <p className="text-[12px] text-slate-500 leading-relaxed text-center italic">
+                    {lifeRhythmResult.disclaimer}
+                  </p>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-6 md:p-8 bg-slate-50 border-t border-slate-200 flex flex-col md:flex-row gap-4 shrink-0 no-print">
+                <div className="flex-1 flex gap-3">
+                  <button 
+                    onClick={() => {
+                      const content = document.getElementById('life-rhythm-report-content');
+                      if (content) {
+                        html2canvas(content).then(canvas => {
+                          const imgData = canvas.toDataURL('image/png');
+                          const pdf = new jsPDF('p', 'mm', 'a4');
+                          const imgProps = pdf.getImageProperties(imgData);
+                          const pdfWidth = pdf.internal.pageSize.getWidth();
+                          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                          pdf.save(`LifeRhythm_Report_${formData.name}.pdf`);
+                        });
+                      }
+                    }}
+                    className="flex-1 py-4 rounded-2xl bg-slate-900 text-white font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all"
+                  >
+                    <Download className="w-5 h-5" /> Download PDF
+                  </button>
+                  <button 
+                    onClick={() => window.print()}
+                    className="flex-1 py-4 rounded-2xl bg-white border border-slate-200 text-slate-900 font-bold flex items-center justify-center gap-2 hover:bg-slate-50 transition-all"
+                  >
+                    <Printer className="w-5 h-5" /> Print
+                  </button>
+                </div>
+                <button 
+                  onClick={() => {
+                    const content = document.getElementById('life-rhythm-report-content');
+                    if (content) {
+                      html2canvas(content).then(canvas => {
+                        const imgData = canvas.toDataURL('image/png');
+                        setMessages(prev => [...prev, {
+                          id: `life-rhythm-share-${Date.now()}`,
+                          type: 'user',
+                          text: `${formData.name}님의 라이프리듬 분석 레포트를 공유합니다.`,
+                        }, {
+                          id: `life-rhythm-img-${Date.now()}`,
+                          type: 'bot',
+                          component: (
+                            <div className="space-y-3">
+                              <img src={imgData} className="w-full rounded-xl shadow-lg border border-brand-border" alt="Life Rhythm Report" />
+                              <p className="text-xs text-slate-500 text-center">AI Life Rhythm Analysis Report</p>
+                            </div>
+                          )
+                        }]);
+                        setShowLifeRhythmReport(false);
+                      });
+                    }
+                  }}
+                  className="flex-1 py-4 rounded-2xl bg-emerald-600 text-white font-bold flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20"
+                >
+                  <Share2 className="w-5 h-5" /> Share to Chat
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
         {showReportModal && prediction && (
           <motion.div 
