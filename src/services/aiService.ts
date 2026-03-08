@@ -1,6 +1,13 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+function getAI() {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.warn("GEMINI_API_KEY is not defined. AI features will be disabled.");
+    return null;
+  }
+  return new GoogleGenAI({ apiKey });
+}
 
 const HEARING_RISK_SYSTEM_INSTRUCTION = `You are an expert audiologist and health data analyst. 
 Your task is to predict hearing loss risk based on user data (age, gender, lifestyle, symptoms).
@@ -22,6 +29,9 @@ export interface HearingData {
 
 export async function predictHearingRisk(data: HearingData) {
   try {
+    const ai = getAI();
+    if (!ai) return null;
+
     const prompt = `Analyze hearing risk for:
     Age: ${data.age}
     Gender: ${data.gender}
