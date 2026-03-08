@@ -51,7 +51,6 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { predictHearingRisk, HearingData } from './services/aiService';
 import MimiGame from './components/MimiGame';
-import LuneChat from './components/LuneChat';
 import { generateLandingImage } from './services/imageService';
 import SoundBlockTetris from './components/SoundBlockTetris';
 import TarotGame from './components/TarotGame';
@@ -119,9 +118,7 @@ export default function App() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [showTetrisGame, setShowTetrisGame] = useState(false);
   const [showMimiGame, setShowMimiGame] = useState(false);
-  const [showLuneChat, setShowLuneChat] = useState(false);
   const [showTarotGame, setShowTarotGame] = useState(false);
-  const [initialLuneMessage, setInitialLuneMessage] = useState<string | undefined>(undefined);
   const [reportChartImage, setReportChartImage] = useState('');
   const [contactForm, setContactForm] = useState({
     name: '',
@@ -268,9 +265,13 @@ export default function App() {
     }
   };
 
-  const playTone = (freq: number, db: number) => {
+  const playTone = async (freq: number, db: number) => {
     if (!audioContext.current) return;
     
+    if (audioContext.current.state === 'suspended') {
+      await audioContext.current.resume();
+    }
+
     if (oscillator.current) {
       oscillator.current.stop();
       oscillator.current.disconnect();
@@ -557,13 +558,12 @@ export default function App() {
         >
           <div className="space-y-6">
             <div className="flex flex-col items-center mb-4">
-              <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-black text-white tracking-tighter">EMBARGO</span>
-                <span className="text-4xl font-light text-white tracking-tight">media</span>
+              <div className="flex flex-col items-center gap-2">
+                <h2 className="text-3xl font-black tracking-tighter text-white">EMBARGO MEDIA</h2>
+                <p className="text-[10px] font-medium text-slate-500 tracking-[0.3em] uppercase">
+                  Technology and Bio Healthcare
+                </p>
               </div>
-              <p className="text-[10px] font-medium text-slate-500 tracking-[0.3em] mt-1 uppercase">
-                Technology and Bio Healthcare
-              </p>
             </div>
             
             <div className="space-y-2">
@@ -608,9 +608,16 @@ export default function App() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-4"
+            className="space-y-6"
           >
-            <p className="text-brand-gold font-bold text-lg tracking-tight">{(t as any).landingSub}</p>
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex flex-col items-center gap-2">
+                <h2 className="text-4xl font-black tracking-tighter text-white">EMBARGO MEDIA</h2>
+                <p className="text-brand-gold font-black text-xl tracking-tight">
+                  {lang === 'ko' ? '무료청력검사를 활용하세요!' : 'Take advantage of the free hearing test!'}
+                </p>
+              </div>
+            </div>
             <h1 className="text-5xl font-black leading-tight tracking-tight text-white">
               {(t as any).landingTitle.split('\n').map((line: string, i: number) => (
                 <React.Fragment key={i}>
@@ -666,10 +673,7 @@ export default function App() {
           onClick={resetApp}
           className="flex items-center gap-2 hover:opacity-80 transition-opacity active:scale-95"
         >
-          <div className="w-10 h-10 bg-brand-gold rounded-lg flex items-center justify-center">
-            <Activity className="w-6 h-6 text-brand-black" />
-          </div>
-          <h1 className="text-xl font-black text-white tracking-tight">{(t as any).appName}</h1>
+          <span className="text-2xl font-black tracking-tighter text-brand-gold">OBLIGE</span>
         </button>
         
         <div className="flex items-center gap-3">
@@ -849,21 +853,15 @@ export default function App() {
                   </div>
 
                   <div className="space-y-4">
-                    <button 
-                      onClick={handleAnalyzeReport}
-                      disabled={isAnalyzingReport}
-                      className="w-full py-6 rounded-2xl bg-brand-gold text-brand-black font-black text-xl shadow-xl shadow-brand-gold/20 flex items-center justify-center gap-3 hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isAnalyzingReport ? (
-                        <RefreshCcw className="w-6 h-6 animate-spin" />
-                      ) : (
-                        <Activity className="w-6 h-6" />
-                      )}
-                      {(t as any).analyzeReport}
-                    </button>
-                    <div className="bg-brand-gold/10 rounded-2xl p-6 border-2 border-brand-gold/30 text-center shadow-lg shadow-brand-gold/5">
-                      <p className="text-brand-gold text-sm font-black mb-2 uppercase tracking-tight">{(t as any).shareForPrize}</p>
-                      <p className="text-base text-white font-bold">{(t as any).prizes}</p>
+                    <div className="bg-brand-gold/10 rounded-2xl p-6 border border-brand-gold/30 text-center">
+                      <p className="text-brand-gold text-sm font-black mb-2 uppercase tracking-tight">청력 건강 상태 요약</p>
+                      <p className="text-white font-bold leading-relaxed">
+                        {prediction.score < 30 
+                          ? "청력이 매우 건강한 상태입니다. 현재의 생활 습관을 유지하며 정기적인 검진을 권장합니다." 
+                          : prediction.score < 60 
+                          ? "약간의 청력 저하가 관찰됩니다. 소음 노출을 줄이고 전문가와의 상담을 고려해보세요." 
+                          : "청력 손실 위험이 높습니다. 빠른 시일 내에 이비인후과 전문의의 정밀 검사를 받으시길 권장합니다."}
+                      </p>
                     </div>
                   </div>
 
@@ -1130,7 +1128,7 @@ export default function App() {
                 <div className="absolute inset-0 bg-gradient-to-r from-brand-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <Sparkles className="w-8 h-8 animate-pulse" />
                 <div className="text-left">
-                  <p className="leading-none mb-1">{lang === 'ko' ? '타로 청각 재활' : 'Tarot Auditory Rehab'}</p>
+                  <p className="leading-none mb-1">{lang === 'ko' ? '타로 청각 게임' : 'Tarot Auditory Game'}</p>
                   <p className="text-[10px] uppercase tracking-[0.2em] opacity-60">AI Tarot + Hearing Mission</p>
                 </div>
               </button>
@@ -1204,32 +1202,6 @@ export default function App() {
                 >
                   <Music className="w-6 h-6 text-brand-gold" />
                   {(t as any).navGame}
-                </button>
-                <button 
-                  onClick={() => setShowLuneChat(true)}
-                  className="w-full py-6 rounded-[32px] bg-brand-gold/10 border border-brand-gold/40 text-brand-gold shadow-[0_0_30px_rgba(197,160,89,0.15)] hover:bg-brand-gold/20 transition-all flex items-center justify-between px-8 group overflow-hidden relative"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-brand-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="flex items-center gap-5 relative z-10">
-                    <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-brand-gold/40 shadow-xl">
-                      <img 
-                        src="https://storage.googleapis.com/static-content-ais/images/5w6d5kcggzo2iwp6uckqtl/177491424081/1741368904712_image.png" 
-                        alt="LUNE" 
-                        className="w-full h-full object-cover"
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=800";
-                        }}
-                      />
-                    </div>
-                    <div className="text-left">
-                      <p className="text-xl font-black tracking-tight leading-none mb-1">LUNE 룬</p>
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Emotional AI Companion</p>
-                    </div>
-                  </div>
-                  <div className="relative z-10">
-                    <Sparkles className="w-8 h-8 text-brand-gold animate-pulse" />
-                  </div>
                 </button>
                 <button 
                   onClick={() => handleAction('others')}
@@ -1440,32 +1412,12 @@ export default function App() {
         {showMimiGame && (
           <MimiGame onClose={() => setShowMimiGame(false)} t={t} />
         )}
-      <AnimatePresence>
-        {showLuneChat && (
-          <LuneChat 
-            onClose={() => {
-              setShowLuneChat(false);
-              setInitialLuneMessage(undefined);
-            }} 
-            lang={lang} 
-            initialMessage={initialLuneMessage}
-          />
-        )}
-      </AnimatePresence>
 
       <AnimatePresence>
         {showTarotGame && (
           <TarotGame 
             onClose={() => setShowTarotGame(false)}
             lang={lang}
-            onSelectCard={(cardName) => {
-              const msg = lang === 'ko' 
-                ? `제가 '${cardName}' 카드를 뽑았어요! 이 카드의 의미와 저를 위한 청각 재활 미션을 알려주세요.` 
-                : `I picked the '${cardName}' card! Please tell me its meaning and give me an auditory rehab mission.`;
-              setInitialLuneMessage(msg);
-              setShowTarotGame(false);
-              setShowLuneChat(true);
-            }}
           />
         )}
       </AnimatePresence>
@@ -1606,16 +1558,11 @@ export default function App() {
         {[
           { id: 'welfare', icon: Search, label: (t as any).navWelfare },
           { id: 'hearing', icon: Ear, label: (t as any).navHearing },
-          { id: 'lune', icon: Sparkles, label: 'LUNE' },
           { id: 'community', icon: MessageSquare, label: (t as any).navCommunity },
         ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => {
-              if (tab.id === 'lune') {
-                setShowLuneChat(true);
-                return;
-              }
               setActiveTab(tab.id);
               if (tab.id === 'hearing') {
                 setStep('welcome');
@@ -1640,7 +1587,7 @@ export default function App() {
       <div className="w-full max-w-md bg-brand-dark-gray/60 backdrop-blur-xl pb-4 flex flex-col items-center gap-4 z-50">
         <div className="w-32 h-1 bg-brand-border rounded-full" />
         <div className="text-[10px] text-slate-600 font-medium tracking-tight">
-          Copyright EMBARGO MEDIA, INC 2026
+          Copyright OBLIGE, INC 2026
         </div>
       </div>
     </div>

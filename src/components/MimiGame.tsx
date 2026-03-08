@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Play, RotateCcw, Trophy, Music, Zap, Heart, Star, ArrowRight, Volume2, Eye } from 'lucide-react';
+import { X, Play, RotateCcw, Trophy, Music, Zap, Heart, Star, ArrowRight, ArrowLeft, Volume2, Eye } from 'lucide-react';
 
 interface MimiGameProps {
   onClose: () => void;
@@ -86,21 +86,30 @@ const MimiGame: React.FC<MimiGameProps> = ({ onClose, t }) => {
 
     let cameraX = 0;
     const keys: { [key: string]: boolean } = {};
+    const touchState: { [key: string]: boolean } = { left: false, right: false, jump: false };
 
     const handleKeyDown = (e: KeyboardEvent) => keys[e.code] = true;
     const handleKeyUp = (e: KeyboardEvent) => keys[e.code] = false;
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
+    // Expose touch controls to window for the UI buttons
+    (window as any).mimiControls = {
+      setLeft: (v: boolean) => touchState.left = v,
+      setRight: (v: boolean) => touchState.right = v,
+      setJump: (v: boolean) => touchState.jump = v,
+    };
+
     const update = () => {
       // Player movement
-      if (keys['ArrowRight']) player.x += SPEED;
-      if (keys['ArrowLeft']) player.x -= SPEED;
+      if (keys['ArrowRight'] || touchState.right) player.x += SPEED;
+      if (keys['ArrowLeft'] || touchState.left) player.x -= SPEED;
       
-      if (keys['Space'] && player.isGrounded) {
+      if ((keys['Space'] || touchState.jump) && player.isGrounded) {
         player.dy = JUMP_FORCE;
         player.isGrounded = false;
         playSound(300, 'square', 0.1);
+        touchState.jump = false; // Reset jump touch
       }
 
       // Gravity
@@ -250,45 +259,45 @@ const MimiGame: React.FC<MimiGameProps> = ({ onClose, t }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-brand-black flex flex-col items-center justify-center overflow-hidden"
+      className="fixed inset-0 z-[100] bg-brand-black flex flex-col items-center justify-start overflow-y-auto"
     >
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center bg-gradient-to-b from-brand-black to-transparent z-10">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-brand-gold/20 flex items-center justify-center border border-brand-gold/30">
-            <Music className="w-6 h-6 text-brand-gold" />
+      <div className="w-full p-4 sm:p-6 flex justify-between items-center bg-gradient-to-b from-brand-black to-transparent z-10">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-brand-gold/20 flex items-center justify-center border border-brand-gold/30">
+            <Music className="w-5 h-5 sm:w-6 sm:h-6 text-brand-gold" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-white tracking-tight">Mimi's Sound Adventure</h1>
-            <div className="flex items-center gap-3 mt-1">
+            <h1 className="text-lg sm:text-xl font-black text-white tracking-tight">Mimi's Sound Adventure</h1>
+            <div className="flex items-center gap-2 sm:gap-3 mt-0.5 sm:mt-1">
               <div className="flex items-center gap-1">
-                <Star className="w-3 h-3 text-brand-gold fill-current" />
-                <span className="text-xs font-bold text-slate-400">Level {level}</span>
+                <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-brand-gold fill-current" />
+                <span className="text-[10px] sm:text-xs font-bold text-slate-400">Level {level}</span>
               </div>
-              <div className="w-1 h-1 rounded-full bg-slate-700" />
-              <span className="text-xs font-bold text-brand-gold">{score} pts</span>
+              <div className="w-0.5 h-0.5 sm:w-1 sm:h-1 rounded-full bg-slate-700" />
+              <span className="text-[10px] sm:text-xs font-bold text-brand-gold">{score} pts</span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button 
             onClick={() => setShowVisualAid(!showVisualAid)}
-            className={`p-3 rounded-xl border transition-all ${showVisualAid ? 'bg-brand-gold/20 border-brand-gold/50 text-brand-gold' : 'bg-brand-dark-gray/40 border-brand-border text-slate-500'}`}
+            className={`p-2 sm:p-3 rounded-xl border transition-all ${showVisualAid ? 'bg-brand-gold/20 border-brand-gold/50 text-brand-gold' : 'bg-brand-dark-gray/40 border-brand-border text-slate-500'}`}
           >
-            <Eye className="w-5 h-5" />
+            <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
           <button 
             onClick={onClose}
-            className="p-3 rounded-xl bg-brand-dark-gray/40 border border-brand-border text-slate-400 hover:text-white transition-all"
+            className="p-2 sm:p-3 rounded-xl bg-brand-dark-gray/40 border border-brand-border text-slate-400 hover:text-white transition-all"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
       </div>
 
       {/* Game Canvas */}
-      <div className="relative w-full max-w-4xl aspect-[16/9] bg-brand-dark-gray/20 rounded-[40px] border border-brand-border overflow-hidden shadow-2xl">
+      <div className="relative w-full max-w-4xl aspect-[16/9] bg-brand-dark-gray/20 sm:rounded-[40px] border border-brand-border overflow-hidden shadow-2xl">
         <canvas 
           ref={canvasRef} 
           width={800} 
@@ -432,6 +441,35 @@ const MimiGame: React.FC<MimiGameProps> = ({ onClose, t }) => {
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
+
+      {/* Mobile Controls */}
+      <div className="absolute bottom-24 left-8 right-8 flex justify-between items-center md:hidden z-20">
+        <div className="flex gap-4">
+          <button 
+            onPointerDown={() => (window as any).mimiControls?.setLeft(true)}
+            onPointerUp={() => (window as any).mimiControls?.setLeft(false)}
+            onPointerLeave={() => (window as any).mimiControls?.setLeft(false)}
+            className="w-16 h-16 rounded-2xl bg-brand-dark-gray/60 backdrop-blur-md border border-brand-border flex items-center justify-center active:bg-brand-gold/20 transition-all"
+          >
+            <ArrowLeft className="w-8 h-8 text-white" />
+          </button>
+          <button 
+            onPointerDown={() => (window as any).mimiControls?.setRight(true)}
+            onPointerUp={() => (window as any).mimiControls?.setRight(false)}
+            onPointerLeave={() => (window as any).mimiControls?.setRight(false)}
+            className="w-16 h-16 rounded-2xl bg-brand-dark-gray/60 backdrop-blur-md border border-brand-border flex items-center justify-center active:bg-brand-gold/20 transition-all"
+          >
+            <ArrowRight className="w-8 h-8 text-white" />
+          </button>
+        </div>
+        <button 
+          onPointerDown={() => (window as any).mimiControls?.setJump(true)}
+          onPointerUp={() => (window as any).mimiControls?.setJump(false)}
+          className="w-20 h-20 rounded-full bg-brand-gold text-brand-black flex items-center justify-center shadow-xl shadow-brand-gold/20 active:scale-90 transition-all"
+        >
+          <Zap className="w-10 h-10 fill-current" />
+        </button>
       </div>
 
       {/* Controls Help */}

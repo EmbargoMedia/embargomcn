@@ -3,79 +3,96 @@ export type Language = 'ko' | 'en' | 'ja' | 'zh' | 'es' | 'fr';
 export const healthTips = [
   { 
     id: '1',
-    title: "소음성 난청 예방 5계명", 
-    desc: "60-60 법칙(60% 볼륨, 60분 사용)을 실천하여 소중한 청력을 보호하세요.", 
+    title: "🎧 소음성 난청 예방 5계명", 
+    desc: "당신의 소중한 청력을 지키는 가장 확실한 방법, 60-60 법칙을 기억하세요.", 
     content: `
-      ### 1. 60-60 법칙 준수
-      이어폰 사용 시 최대 볼륨의 60% 이하로 설정하고, 60분 사용 후에는 반드시 10분 이상 휴식을 취하세요.
-      
-      ### 2. 소음 노출 최소화
-      공사장이나 클럽 등 큰 소음이 발생하는 장소는 가급적 피하고, 불가피한 경우 귀마개를 착용하세요.
-      
-      ### 3. 정기적인 청력 검사
-      1년에 한 번은 전문가를 통해 청력 상태를 점검하는 것이 좋습니다.
-      
-      ### 4. 귀 건강에 좋은 음식 섭취
-      아연과 마그네슘이 풍부한 견과류, 해조류 등을 꾸준히 섭취하세요.
-      
-      ### 5. 충분한 휴식과 스트레스 관리
-      과도한 피로는 청각 신경에 무리를 줄 수 있습니다. 규칙적인 생활 습관을 유지하세요.
+### 1. 60-60 법칙 준수
+이어폰 사용 시 최대 볼륨의 **60% 이하**로 설정하고, **60분 사용 후에는 반드시 10분 이상** 휴식을 취하세요.
+
+### 2. 소음 노출 최소화
+공사장이나 클럽 등 큰 소음이 발생하는 장소는 가급적 피하고, 불가피한 경우 **귀마개를 착용**하세요.
+
+### 3. 정기적인 청력 검사
+1년에 한 번은 전문가를 통해 청력 상태를 점검하는 것이 좋습니다. **조기 발견이 가장 중요합니다.**
+
+### 4. 귀 건강에 좋은 음식 섭취
+아연과 마그네슘이 풍부한 견과류, 해조류 등을 꾸준히 섭취하여 청각 세포를 보호하세요.
+
+### 5. 충분한 휴식과 스트레스 관리
+과도한 피로는 청각 신경에 무리를 줄 수 있습니다. 규칙적인 생활 습관과 충분한 수면을 유지하세요.
     `,
     tag: "예방 가이드",
-    img: "https://images.unsplash.com/photo-1583417319070-4a69db38a482?auto=format&fit=crop&q=80&w=800"
+    img: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=800"
   },
   { 
     id: '2',
-    title: "귀 건강에 좋은 영양소", 
-    desc: "아연, 마그네슘, 엽산이 풍부한 음식을 섭취하면 청력 감퇴 예방에 도움이 됩니다.", 
+    title: "🥦 귀 건강을 위한 슈퍼푸드", 
+    desc: "아연, 마그네슘, 엽산이 풍부한 음식을 섭취하면 청력 감퇴 예방에 큰 도움이 됩니다.", 
     content: `
-      ### 청력을 지키는 3대 영양소
-      
-      **1. 아연 (Zinc)**
-      청각 신경의 노화를 방지하고 이명 완화에 도움을 줍니다. 굴, 소고기, 계란 노른자에 풍부합니다.
-      
-      **2. 마그네슘 (Magnesium)**
-      소음으로부터 내이의 유모세포를 보호하는 역할을 합니다. 아몬드, 바나나, 시금치에 많이 들어있습니다.
-      
-      **3. 엽산 (Folic Acid)**
-      혈액 순환을 도와 청각 기관으로의 영양 공급을 원활하게 합니다. 브로콜리, 아스파라거스, 오렌지 등이 대표적입니다.
+### 청력을 지키는 3대 필수 영양소
+
+**1. 아연 (Zinc)**
+청각 신경의 노화를 방지하고 이명 완화에 도움을 줍니다. 
+- *추천 식품: 굴, 소고기, 계란 노른자*
+
+**2. 마그네슘 (Magnesium)**
+소음으로부터 내이의 유모세포를 보호하는 역할을 합니다. 
+- *추천 식품: 아몬드, 바나나, 시금치*
+
+**3. 엽산 (Folic Acid)**
+혈액 순환을 도와 청각 기관으로의 영양 공급을 원활하게 합니다. 
+- *추천 식품: 브로콜리, 아스파라거스, 오렌지*
     `,
     tag: "식이 요법",
-    img: "https://images.unsplash.com/photo-1551727041-5b347d65b633?auto=format&fit=crop&q=80&w=800"
+    img: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=800"
   },
   { 
     id: '3',
-    title: "이명 완화를 위한 생활 습관", 
+    title: "🌿 이명 완화를 위한 생활 습관", 
     desc: "스트레스 관리와 충분한 휴식, 그리고 백색소음을 활용한 이명 케어 방법을 알아보세요.", 
     content: `
-      ### 이명과 작별하는 방법
-      
-      이명은 외부 소리 자극 없이 귀에서 소리가 들리는 현상입니다. 완벽한 치료는 어렵지만 생활 습관 개선으로 충분히 완화할 수 있습니다.
-      
-      - **조용한 환경 피하기**: 너무 조용한 곳에서는 이명이 더 크게 느껴질 수 있습니다. 잔잔한 배경음악이나 백색소음을 활용하세요.
-      - **카페인과 알코올 제한**: 중추신경계를 자극하여 이명을 악화시킬 수 있습니다.
-      - **규칙적인 운동**: 혈액순환을 개선하여 귀 건강에 긍정적인 영향을 줍니다.
-      - **숙면 취하기**: 피로는 이명의 가장 큰 적입니다.
+### 이명과 작별하는 4가지 방법
+
+이명은 외부 소리 자극 없이 귀에서 소리가 들리는 현상입니다. 생활 습관 개선으로 충분히 완화할 수 있습니다.
+
+1. **조용한 환경 피하기**
+너무 조용한 곳에서는 이명이 더 크게 느껴질 수 있습니다. 잔잔한 배경음악이나 백색소음을 활용하세요.
+
+2. **카페인과 알코올 제한**
+중추신경계를 자극하여 이명을 악화시킬 수 있으므로 섭취를 줄이는 것이 좋습니다.
+
+3. **규칙적인 운동**
+혈액순환을 개선하여 귀 건강에 긍정적인 영향을 줍니다.
+
+4. **숙면 취하기**
+피로는 이명의 가장 큰 적입니다. 일정한 수면 패턴을 유지하세요.
     `,
     tag: "이명 케어",
-    img: "https://images.unsplash.com/photo-1559038910-281ce0f7eaa4?auto=format&fit=crop&q=80&w=800"
+    img: "https://images.unsplash.com/photo-1516062423079-7ca13cdc7f5a?q=80&w=800"
   },
   { 
     id: '4',
-    title: "보청기 선택 시 고려사항", 
-    desc: "나의 청력 상태와 생활 환경에 맞는 최적의 보청기를 고르는 체크리스트.", 
+    title: "🦻 보청기 선택 시 필수 체크리스트", 
+    desc: "나의 청력 상태와 생활 환경에 맞는 최적의 보청기를 고르는 방법을 확인하세요.", 
     content: `
-      ### 나에게 맞는 보청기 찾기
-      
-      보청기는 단순히 소리를 크게 해주는 장치가 아니라, 개인의 청력 특성에 맞춘 정밀 의료기기입니다.
-      
-      1. **정확한 청력 검사**: 먼저 이비인후과 전문의를 통해 정확한 청력 손실 정도를 파악해야 합니다.
-      2. **착용 목적과 환경**: 주로 대화를 많이 하는지, 야외 활동이 많은지 등 생활 패턴을 고려하세요.
-      3. **형태 선택**: 귓속형, 귀걸이형 등 외관과 편의성에 따라 선택할 수 있습니다.
-      4. **사후 관리 서비스**: 보청기는 지속적인 조절(피팅)이 필요하므로 A/S가 용이한지 확인하세요.
+### 나에게 딱 맞는 보청기 찾기
+
+보청기는 개인의 청력 특성에 맞춘 정밀 의료기기입니다.
+
+1. **정확한 청력 검사**
+이비인후과 전문의를 통해 정확한 청력 손실 정도를 파악하는 것이 첫 번째 단계입니다.
+
+2. **착용 목적과 환경 고려**
+주로 대화를 많이 하는지, 야외 활동이 많은지 등 본인의 생활 패턴을 고려하여 기능을 선택하세요.
+
+3. **형태 선택 (귓속형 vs 귀걸이형)**
+외관상 노출 정도와 착용 편의성에 따라 본인에게 맞는 형태를 선택합니다.
+
+4. **사후 관리 서비스 확인**
+보청기는 지속적인 피팅이 필요하므로 A/S가 용이한 전문 센터를 선택하세요.
     `,
     tag: "기기 가이드",
-    img: "https://images.unsplash.com/photo-1583417319070-4a69db38a482?auto=format&fit=crop&q=80&w=800"
+    img: "https://images.unsplash.com/photo-1590602846989-e99596d2a6ee?q=80&w=800"
   }
 ];
 
@@ -167,8 +184,6 @@ export const translations = {
     analyzeReport: "Analyze Report",
     analyzingReport: "AI is analyzing your report...",
     reportReady: "Detailed report is ready!",
-    shareForPrize: "Share this PDF in the chat to enter the prize draw!",
-    prizes: "🎁 Starbucks gift cards, hearing aid discounts, and more!",
     downloadPdf: "Download PDF Report",
     detailedAnalysis: "Detailed Hearing Health Analysis",
     preventativeMeasures: "Preventative Measures",
@@ -181,9 +196,9 @@ export const translations = {
     realTimeConsultationPreparing: "Real-time hearing specialist consultation is under preparation.",
     lineToConnect: "Connect via LINE",
     kakaoTalkToConnect: "Connect via KakaoTalk Channel",
-    aboutTitle: "About EMBARGO MEDIA",
+    aboutTitle: "About OBLIGE",
     aboutSub: "Smart Jewelry - A new standard for early diagnosis and treatment of hearing loss",
-    aboutDescription: "Embargo Media innovates the hearing loss management market by combining AI, IoT, and medical data. Meet our customized hearing aids, AI-based chatbots, and auditory rehabilitation solutions.",
+    aboutDescription: "OBLIGE innovates the hearing loss management market by combining AI, IoT, and medical data. Meet our customized hearing aids, AI-based chatbots, and auditory rehabilitation solutions.",
     aboutSection1Title: "AI-based Customized Early Diagnosis & Rehabilitation Counseling",
     aboutSection1Desc: "We provide data-driven hearing diagnosis and optimized rehabilitation programs through customized hearing loss management solutions using sLLM.",
     aboutFeature1: "AI-based Personalized Diagnosis",
@@ -195,7 +210,7 @@ export const translations = {
     aboutFeature4: "Sound Therapy & Art Diary Rehab",
     aboutFeature4Desc: "Integrated cognitive rehab and psychological stability care",
     aboutStatsTitle: "Over 1.5 billion people worldwide and 8.5 million in Korea suffer from hearing impairment.",
-    aboutStatsDesc: "The existing hearing aid market has low adoption due to price, accessibility, and convenience issues. Embargo Media solves these problems to improve the quality of life for hearing loss patients.",
+    aboutStatsDesc: "The existing hearing aid market has low adoption due to price, accessibility, and convenience issues. OBLIGE solves these problems to improve the quality of life for hearing loss patients.",
     aboutStep1: "Hearing Aid Recommendation after Diagnosis",
     aboutStep2: "Customized Care using Patient Data",
     aboutStep3: "Solution Provision & Feedback Analysis",
@@ -304,8 +319,6 @@ export const translations = {
     analyzeReport: "AI 리포트 상세 분석",
     analyzingReport: "AI가 리포트를 상세 분석 중입니다...",
     reportReady: "상세 분석 리포트가 준비되었습니다!",
-    shareForPrize: "이 PDF 리포트를 채팅창에 공유하시면 추첨을 통해 선물을 드립니다!",
-    prizes: "🎁 스타벅스 기프티콘, 보청기 할인권 등 다양한 혜택!",
     downloadPdf: "PDF 리포트 다운로드",
     detailedAnalysis: "청력 건강 상세 분석",
     preventativeMeasures: "청력 보호를 위한 예방법",
