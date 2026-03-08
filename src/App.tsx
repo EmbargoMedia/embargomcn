@@ -36,7 +36,9 @@ import {
   Play,
   Zap,
   Sparkles,
-  Trophy
+  Trophy,
+  Palette,
+  Pencil
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -57,6 +59,8 @@ import { generateLandingImage } from './services/imageService';
 import SoundBlockTetris from './components/SoundBlockTetris';
 import TarotGame from './components/TarotGame';
 import PokerGame from './components/PokerGame';
+import Imaginarium from './components/Imaginarium';
+import SoundAndSketch from './components/SoundAndSketch';
 import WelfareFinder from './components/WelfareFinder';
 import HumanBodyDiagram from './components/HumanBodyDiagram';
 import { cn } from './utils/cn';
@@ -132,6 +136,8 @@ export default function App() {
   const [showMimiGame, setShowMimiGame] = useState(false);
   const [showTarotGame, setShowTarotGame] = useState(false);
   const [showPokerGame, setShowPokerGame] = useState(false);
+  const [showImaginarium, setShowImaginarium] = useState(false);
+  const [showSoundAndSketch, setShowSoundAndSketch] = useState(false);
   const [reportChartImage, setReportChartImage] = useState('');
   const [contactForm, setContactForm] = useState({
     name: '',
@@ -1137,6 +1143,30 @@ export default function App() {
                   </div>
                   <span className="text-[10px] uppercase tracking-[0.2em] opacity-60 relative z-10">Strategic Cognitive Training</span>
                 </button>
+
+                <button 
+                  onClick={() => setShowImaginarium(true)}
+                  className="w-full py-6 rounded-[32px] bg-gradient-to-r from-purple-600 to-pink-600 text-white font-black text-2xl shadow-2xl shadow-purple-900/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-1 group relative overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+                  <div className="flex items-center gap-3 relative z-10">
+                    <Palette className="w-8 h-8 fill-current" />
+                    <span>{lang === 'ko' ? '이매지나리움' : 'Imaginarium'}</span>
+                  </div>
+                  <span className="text-[10px] uppercase tracking-[0.2em] opacity-60 relative z-10">Creative Cognitive Training</span>
+                </button>
+
+                <button 
+                  onClick={() => setShowSoundAndSketch(true)}
+                  className="w-full py-6 rounded-[32px] bg-[#FF7E67] text-white font-black text-2xl shadow-2xl shadow-orange-900/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-1 group relative overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+                  <div className="flex items-center gap-3 relative z-10">
+                    <Pencil className="w-8 h-8 fill-current" />
+                    <span>{lang === 'ko' ? '사운드 앤 스케치' : 'Sound & Sketch'}</span>
+                  </div>
+                  <span className="text-[10px] uppercase tracking-[0.2em] opacity-60 relative z-10">Auditory & Visual Cognitive</span>
+                </button>
               </div>
             </div>
           </motion.div>
@@ -1497,6 +1527,18 @@ export default function App() {
         {showPokerGame && (
           <PokerGame 
             onClose={() => setShowPokerGame(false)}
+            lang={lang}
+          />
+        )}
+        {showImaginarium && (
+          <Imaginarium 
+            onClose={() => setShowImaginarium(false)}
+            lang={lang}
+          />
+        )}
+        {showSoundAndSketch && (
+          <SoundAndSketch 
+            onClose={() => setShowSoundAndSketch(false)}
             lang={lang}
           />
         )}
