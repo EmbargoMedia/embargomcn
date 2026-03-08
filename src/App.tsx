@@ -138,6 +138,7 @@ export default function App() {
   const [showPokerGame, setShowPokerGame] = useState(false);
   const [showImaginarium, setShowImaginarium] = useState(false);
   const [showSoundAndSketch, setShowSoundAndSketch] = useState(false);
+  const [showFloatingMenu, setShowFloatingMenu] = useState(false);
   const [reportChartImage, setReportChartImage] = useState('');
   const [contactForm, setContactForm] = useState({
     name: '',
@@ -363,7 +364,7 @@ export default function App() {
       setTimeout(() => {
         setMessages([
           { id: '1', type: 'bot', text: t.welcome },
-          { id: '2', type: 'bot', text: t.intro }
+          { id: '2', type: 'bot', text: '청력 검사나 인지 재활 게임을 시작하시려면 하단 메뉴의 [메뉴] 버튼을 눌러주세요!' }
         ]);
         setIsTyping(false);
       }, 1000);
@@ -432,6 +433,7 @@ export default function App() {
       case 'pta-start':
         addUserMessage(t.ptaStart);
         setStep('pta-test');
+        setShowFloatingMenu(false);
         // Play first tone
         setTimeout(() => playTone(FREQUENCIES[0], 40), 1000);
         break;
@@ -472,6 +474,7 @@ export default function App() {
         break;
 
       case 'finish-test':
+        setShowFloatingMenu(false);
         const thresholds = ptaResults.map(r => r.threshold);
         const avgThreshold = thresholds.length > 0 ? thresholds.reduce((a, b) => a + b, 0) / thresholds.length : 0;
         
@@ -812,12 +815,23 @@ export default function App() {
 
       {/* Header */}
       <header className="w-full max-w-md bg-brand-dark-gray/40 backdrop-blur-xl border-b border-brand-white/10 px-6 py-5 flex items-center justify-between sticky top-0 z-50">
-        <button 
-          onClick={resetApp}
-          className="flex items-center gap-2 hover:opacity-80 transition-opacity active:scale-95"
-        >
-          <span className="text-2xl font-black tracking-tighter text-brand-gold">OBLIGE</span>
-        </button>
+        <div className="flex flex-col gap-1">
+          <button 
+            onClick={resetApp}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity active:scale-95"
+          >
+            <span className="text-2xl font-black tracking-tighter text-brand-gold">OBLIGE</span>
+          </button>
+          {activeTab !== 'hearing' && (
+            <button 
+              onClick={() => setActiveTab('hearing')}
+              className="flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-white transition-colors"
+            >
+              <ChevronLeft className="w-3 h-3" />
+              {lang === 'ko' ? '뒤로가기' : 'Back'}
+            </button>
+          )}
+        </div>
         
         <div className="flex items-center gap-3">
           <button 
@@ -1199,312 +1213,360 @@ export default function App() {
         <div ref={chatEndRef} />
       </main>
 
-      {/* Floating Action Area - Positioned above Bottom Nav */}
-      {activeTab === 'hearing' && (
-        <div className="w-full max-w-md bg-brand-dark-gray/60 backdrop-blur-xl border border-brand-border p-6 space-y-4 absolute bottom-[120px] z-[60] rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] max-h-[60vh] overflow-y-auto scrollbar-hide mx-auto left-0 right-0">
-          <div className="flex flex-col gap-3">
-            {step === 'welcome' && (
-              <>
-                <button 
-                  onClick={() => handleAction('start-test')}
-                  className="action-button-hospital py-4 text-base"
-                >
-                  <Stethoscope className="w-5 h-5" />
-                  {t.startTest}
-                </button>
-                <button 
-                  onClick={() => handleAction('life-rhythm-start')}
-                  className="action-button-hospital py-4 text-base"
-                >
-                  <Activity className="w-5 h-5 text-emerald-500" />
-                  {(t as any).lifeRhythmTitle}
-                </button>
-                <button 
-                  onClick={() => setActiveTab('game')}
-                  className="action-button-hospital py-4 text-base"
-                >
-                  <Music className="w-5 h-5" />
-                  {(t as any).navGame}
-                </button>
-                <button 
-                  onClick={() => handleAction('others')}
-                  className="action-button-hospital py-4 text-sm w-full border-none bg-transparent hover:bg-white/5"
-                >
-                  <MoreHorizontal className="w-5 h-5" />
-                  {t.others}
-                </button>
-              </>
-            )}
-
-            {step === 'life-rhythm-ask-info' && (
-              <div className="space-y-4 w-full">
-                <div className="flex items-center gap-4 mb-2">
-                  <button 
-                    onClick={() => setStep('welcome')}
-                    className="p-2 rounded-full bg-brand-dark-gray border border-brand-border text-slate-400 hover:text-white transition-all"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <h2 className="text-xl font-bold text-white">라이프리듬 정보 입력</h2>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">이름</label>
-                  <input 
-                    type="text" 
-                    placeholder="이름을 입력하세요"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">생년월일</label>
-                  <input 
-                    type="text" 
-                    placeholder="YYYY-MM-DD"
-                    value={formData.birthDate}
-                    onChange={(e) => setFormData(prev => ({ ...prev, birthDate: e.target.value }))}
-                    className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">출생시간</label>
-                  <input 
-                    type="text" 
-                    placeholder="HH:MM (모를 경우 '모름' 입력)"
-                    value={formData.birthTime}
-                    onChange={(e) => setFormData(prev => ({ ...prev, birthTime: e.target.value }))}
-                    className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
-                  />
-                </div>
-                <button 
-                  disabled={!formData.name || !formData.birthDate || !formData.birthTime}
-                  onClick={() => handleAction('life-rhythm-analyze')}
-                  className={cn(
-                    "w-full py-4 rounded-xl font-bold text-lg transition-all mt-4",
-                    (!formData.name || !formData.birthDate || !formData.birthTime)
-                      ? "bg-brand-dark-gray text-slate-600 cursor-not-allowed"
-                      : "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                  )}
-                >
-                  분석 시작하기
-                </button>
-              </div>
-            )}
-
-            {step === 'others-links' && (
-              <div className="space-y-2.5">
-                <button 
-                  onClick={() => window.open('https://line.me', '_blank')}
-                  className="w-full py-4 rounded-xl bg-[#06C755] text-white font-black flex items-center justify-center gap-3 shadow-lg hover:brightness-110 transition-all text-base"
-                >
-                  <MessageSquare className="w-5 h-5 fill-current" />
-                  {(t as any).lineToConnect}
-                </button>
-                <button 
-                  onClick={() => window.open('https://pf.kakao.com', '_blank')}
-                  className="w-full py-4 rounded-xl bg-[#FEE500] text-[#3C1E1E] font-black flex items-center justify-center gap-3 shadow-lg hover:brightness-110 transition-all text-base"
-                >
-                  <MessageCircle className="w-5 h-5 fill-current" />
-                  {(t as any).kakaoTalkToConnect}
-                </button>
-                <button 
-                  onClick={() => setStep('welcome')}
-                  className="w-full py-3 rounded-xl bg-brand-black/40 backdrop-blur-sm border border-brand-border text-slate-500 font-bold text-xs hover:bg-brand-gold/5 transition-all"
-                >
-                  {t.backToList}
-                </button>
-              </div>
-            )}
-
-            {step === 'ask-age' && (
-              <div className="space-y-4 w-full">
-                <div className="flex items-center gap-4 mb-2">
-                  <button 
-                    onClick={() => setStep('welcome')}
-                    className="p-2 rounded-full bg-brand-dark-gray border border-brand-border text-slate-400 hover:text-white transition-all"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <h2 className="text-xl font-bold text-white">{(t as any).infoInputTitle || '정보 입력'}</h2>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">{(t as any).nameLabel}</label>
-                  <input 
-                    type="text" 
-                    placeholder={(t as any).namePlaceholder}
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">{(t as any).ageLabel}</label>
-                  <input 
-                    type="number" 
-                    placeholder={(t as any).agePlaceholder}
-                    value={formData.age}
-                    onChange={(e) => setFormData(prev => ({ ...prev, age: e.target.value }))}
-                    className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">{(t as any).phoneLabel}</label>
-                  <input 
-                    type="tel" 
-                    placeholder="010-0000-0000"
-                    value={formData.phone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                    className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">{(t as any).emailLabel}</label>
-                  <input 
-                    type="email" 
-                    placeholder="example@email.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
-                  />
-                </div>
-                <button 
-                  disabled={!formData.name || !formData.age || !formData.phone || !formData.email}
-                  onClick={() => handleAction('set-age')}
-                  className={cn(
-                    "w-full py-4 rounded-xl font-bold text-lg transition-all mt-4",
-                    (!formData.name || !formData.age || !formData.phone || !formData.email)
-                      ? "bg-brand-dark-gray text-slate-600 cursor-not-allowed"
-                      : "bg-brand-gold text-brand-black shadow-lg shadow-brand-gold/20"
-                  )}
-                >
-                  {(t as any).nextStep}
-                </button>
-              </div>
-            )}
-
-            {step === 'ask-gender' && (
-              <div className="grid grid-cols-2 gap-4">
-                <button onClick={() => handleAction('set-gender', 'male')} className="action-button-hospital py-4 text-base">{t.male}</button>
-                <button onClick={() => handleAction('set-gender', 'female')} className="action-button-hospital py-4 text-base">{t.female}</button>
-              </div>
-            )}
-
-            {step === 'ask-age-group' && (
-              <div className="grid grid-cols-1 gap-3 w-full">
-                <div className="flex items-center gap-4 mb-2">
-                  <button 
-                    onClick={() => setStep('ask-age')}
-                    className="p-2 rounded-full bg-brand-dark-gray border border-brand-border text-slate-400 hover:text-white transition-all"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <h2 className="text-xl font-bold text-white">{(t as any).ageGroupTitle || '연령대 선택'}</h2>
-                </div>
-                <button onClick={() => handleAction('set-age-group', 'youth')} className="action-button-hospital py-3.5 text-base">{(t as any).youth}</button>
-                <button onClick={() => handleAction('set-age-group', 'adult')} className="action-button-hospital py-3.5 text-base">{(t as any).adult}</button>
-                <button onClick={() => handleAction('set-age-group', 'senior')} className="action-button-hospital py-3.5 text-base">{(t as any).senior}</button>
-              </div>
-            )}
-
-            {step === 'questionnaire-intro' && (
-              <div className="space-y-4 w-full">
-                <div className="flex items-center gap-4 mb-2">
-                  <button 
-                    onClick={() => setStep('ask-age-group')}
-                    className="p-2 rounded-full bg-brand-dark-gray border border-brand-border text-slate-400 hover:text-white transition-all"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <h2 className="text-xl font-bold text-white">{(t as any).questionnaireIntroTitle || '문항 검사 안내'}</h2>
-                </div>
-                <button 
-                  onClick={() => handleAction('start-questionnaire')}
-                  className="action-button-hospital w-full bg-brand-gold text-brand-black border-none py-4 text-base"
-                >
-                  <Send className="w-5 h-5" />
-                  {(t as any).startQuestionnaire}
-                </button>
-                <button 
-                  onClick={() => handleAction('pta-intro-next')}
-                  className="w-full py-3 text-slate-500 font-bold text-xs hover:text-white transition-colors"
-                >
-                  {(t as any).skipQuestionnaire}
-                </button>
-              </div>
-            )}
-
-            {step === 'questionnaire' && (
-              <div className="bg-brand-black/40 backdrop-blur-md rounded-3xl p-8 border border-brand-gold/20 space-y-8">
-                <div className="space-y-2">
-                  <span className="text-xs font-bold text-brand-gold uppercase tracking-widest">
-                    {(t as any).questionnaireTitle} ({questionIndex + 1} / {(questionnaireQuestions as any)[lang][formData.ageGroup || 'adult'].length})
-                  </span>
-                  <p className="text-xl font-bold text-white leading-relaxed">
-                    {(questionnaireQuestions as any)[lang][formData.ageGroup || 'adult'][questionIndex]}
-                  </p>
-                </div>
-                {formData.ageGroup === 'senior' ? (
-                  <div className="grid grid-cols-1 gap-3">
+      {/* Bottom Sheet Menu - Slides up from Bottom Nav */}
+      <AnimatePresence>
+        {activeTab === 'hearing' && showFloatingMenu && (
+          <>
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowFloatingMenu(false)}
+              className="fixed inset-0 bg-black/60 z-[55] max-w-md mx-auto"
+            />
+            
+            <motion.div 
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="w-full max-w-md bg-brand-dark-gray border-t border-brand-gold/20 p-8 pb-32 space-y-6 fixed bottom-0 z-[60] rounded-t-[40px] shadow-[0_-20px_50px_rgba(0,0,0,0.5)] max-h-[80vh] overflow-y-auto scrollbar-hide mx-auto left-0 right-0"
+            >
+              {/* Handle for visual cue */}
+              <div className="w-12 h-1.5 bg-brand-border rounded-full mx-auto mb-2 opacity-50" />
+              
+              <div className="flex flex-col gap-4">
+                {step === 'welcome' && (
+                  <>
+                    <div className="flex items-center justify-between mb-2">
+                      <h2 className="text-xl font-black text-white">청력검사 & 인지게임</h2>
+                      <button onClick={() => setShowFloatingMenu(false)} className="p-2 rounded-full bg-white/5 text-slate-400">
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
                     <button 
-                      onClick={() => handleAction('answer-questionnaire', 4)}
-                      className="py-4 rounded-2xl bg-brand-gold text-brand-black font-bold shadow-lg shadow-brand-gold/20 hover:brightness-110 transition-all text-lg"
+                      onClick={() => {
+                        handleAction('start-test');
+                      }}
+                      className="action-button-hospital py-5 text-lg"
                     >
-                      {(t as any).always}
+                      <Stethoscope className="w-6 h-6" />
+                      {t.startTest}
                     </button>
                     <button 
-                      onClick={() => handleAction('answer-questionnaire', 2)}
-                      className="py-4 rounded-2xl bg-brand-dark-gray border border-brand-border text-white font-bold hover:bg-brand-gold/10 transition-all text-lg"
+                      onClick={() => {
+                        handleAction('life-rhythm-start');
+                      }}
+                      className="action-button-hospital py-5 text-lg"
                     >
-                      {(t as any).sometimes}
+                      <Activity className="w-6 h-6 text-emerald-500" />
+                      {(t as any).lifeRhythmTitle}
                     </button>
                     <button 
-                      onClick={() => handleAction('answer-questionnaire', 0)}
-                      className="py-4 rounded-2xl bg-brand-dark-gray border border-brand-border text-white font-bold hover:bg-brand-gold/10 transition-all text-lg"
+                      onClick={() => {
+                        setActiveTab('game');
+                        setShowFloatingMenu(false);
+                      }}
+                      className="action-button-hospital py-5 text-lg"
                     >
-                      {(t as any).no}
+                      <Music className="w-6 h-6" />
+                      {(t as any).navGame}
+                    </button>
+                    <button 
+                      onClick={() => {
+                        handleAction('others');
+                      }}
+                      className="action-button-hospital py-4 text-sm w-full border-none bg-transparent hover:bg-white/5"
+                    >
+                      <MoreHorizontal className="w-5 h-5" />
+                      {t.others}
+                    </button>
+                  </>
+                )}
+
+                {step === 'life-rhythm-ask-info' && (
+                  <div className="space-y-4 w-full">
+                    <div className="flex items-center gap-4 mb-2">
+                      <button 
+                        onClick={() => setStep('welcome')}
+                        className="p-2 rounded-full bg-brand-dark-gray border border-brand-border text-slate-400 hover:text-white transition-all"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                      <h2 className="text-xl font-bold text-white">라이프리듬 정보 입력</h2>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">이름</label>
+                      <input 
+                        type="text" 
+                        placeholder="이름을 입력하세요"
+                        value={formData.name}
+                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                        className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">생년월일</label>
+                      <input 
+                        type="text" 
+                        placeholder="YYYY-MM-DD"
+                        value={formData.birthDate}
+                        onChange={(e) => setFormData(prev => ({ ...prev, birthDate: e.target.value }))}
+                        className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">출생시간</label>
+                      <input 
+                        type="text" 
+                        placeholder="HH:MM (모를 경우 '모름' 입력)"
+                        value={formData.birthTime}
+                        onChange={(e) => setFormData(prev => ({ ...prev, birthTime: e.target.value }))}
+                        className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
+                      />
+                    </div>
+                    <button 
+                      disabled={!formData.name || !formData.birthDate || !formData.birthTime}
+                      onClick={() => {
+                        handleAction('life-rhythm-analyze');
+                        setShowFloatingMenu(false);
+                      }}
+                      className={cn(
+                        "w-full py-4 rounded-xl font-bold text-lg transition-all mt-4",
+                        (!formData.name || !formData.birthDate || !formData.birthTime)
+                          ? "bg-brand-dark-gray text-slate-600 cursor-not-allowed"
+                          : "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                      )}
+                    >
+                      분석 시작하기
                     </button>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-4">
+                )}
+
+                {step === 'others-links' && (
+                  <div className="space-y-2.5">
                     <button 
-                      onClick={() => handleAction('answer-questionnaire', 0)}
-                      className="py-5 rounded-2xl bg-brand-dark-gray border border-brand-border text-white font-bold hover:bg-brand-gold/10 transition-all"
+                      onClick={() => {
+                        window.open('https://line.me', '_blank');
+                        setShowFloatingMenu(false);
+                      }}
+                      className="w-full py-4 rounded-xl bg-[#06C755] text-white font-black flex items-center justify-center gap-3 shadow-lg hover:brightness-110 transition-all text-base"
                     >
-                      {t.no}
+                      <MessageSquare className="w-5 h-5 fill-current" />
+                      {(t as any).lineToConnect}
                     </button>
                     <button 
-                      onClick={() => handleAction('answer-questionnaire', 4)}
-                      className="py-5 rounded-2xl bg-brand-gold text-brand-black font-bold shadow-lg shadow-brand-gold/20 hover:brightness-110 transition-all"
+                      onClick={() => {
+                        window.open('https://pf.kakao.com', '_blank');
+                        setShowFloatingMenu(false);
+                      }}
+                      className="w-full py-4 rounded-xl bg-[#FEE500] text-[#3C1E1E] font-black flex items-center justify-center gap-3 shadow-lg hover:brightness-110 transition-all text-base"
                     >
-                      {t.yes}
+                      <MessageCircle className="w-5 h-5 fill-current" />
+                      {(t as any).kakaoTalkToConnect}
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setStep('welcome');
+                        setShowFloatingMenu(false);
+                      }}
+                      className="w-full py-3 rounded-xl bg-brand-black/40 backdrop-blur-sm border border-brand-border text-slate-500 font-bold text-xs hover:bg-brand-gold/5 transition-all"
+                    >
+                      {t.backToList}
+                    </button>
+                  </div>
+                )}
+
+                {step === 'ask-age' && (
+                  <div className="space-y-4 w-full">
+                    <div className="flex items-center gap-4 mb-2">
+                      <button 
+                        onClick={() => setStep('welcome')}
+                        className="p-2 rounded-full bg-brand-dark-gray border border-brand-border text-slate-400 hover:text-white transition-all"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                      <h2 className="text-xl font-bold text-white">{(t as any).infoInputTitle || '정보 입력'}</h2>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">{(t as any).nameLabel}</label>
+                      <input 
+                        type="text" 
+                        placeholder={(t as any).namePlaceholder}
+                        value={formData.name}
+                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                        className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">{(t as any).ageLabel}</label>
+                      <input 
+                        type="number" 
+                        placeholder={(t as any).agePlaceholder}
+                        value={formData.age}
+                        onChange={(e) => setFormData(prev => ({ ...prev, age: e.target.value }))}
+                        className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">{(t as any).phoneLabel}</label>
+                      <input 
+                        type="tel" 
+                        placeholder="010-0000-0000"
+                        value={formData.phone}
+                        onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                        className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-2">{(t as any).emailLabel}</label>
+                      <input 
+                        type="email" 
+                        placeholder="example@email.com"
+                        value={formData.email}
+                        onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                        className="w-full py-3 px-4 rounded-xl bg-brand-black border border-brand-border text-white font-bold text-base focus:outline-none focus:border-brand-gold transition-all"
+                      />
+                    </div>
+                    <button 
+                      disabled={!formData.name || !formData.age || !formData.phone || !formData.email}
+                      onClick={() => handleAction('set-age')}
+                      className={cn(
+                        "w-full py-4 rounded-xl font-bold text-lg transition-all mt-4",
+                        (!formData.name || !formData.age || !formData.phone || !formData.email)
+                          ? "bg-brand-dark-gray text-slate-600 cursor-not-allowed"
+                          : "bg-brand-gold text-brand-black shadow-lg shadow-brand-gold/20"
+                      )}
+                    >
+                      {(t as any).nextStep}
+                    </button>
+                  </div>
+                )}
+
+                {step === 'ask-gender' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <button onClick={() => handleAction('set-gender', 'male')} className="action-button-hospital py-4 text-base">{t.male}</button>
+                    <button onClick={() => handleAction('set-gender', 'female')} className="action-button-hospital py-4 text-base">{t.female}</button>
+                  </div>
+                )}
+
+                {step === 'ask-age-group' && (
+                  <div className="grid grid-cols-1 gap-3 w-full">
+                    <div className="flex items-center gap-4 mb-2">
+                      <button 
+                        onClick={() => setStep('ask-age')}
+                        className="p-2 rounded-full bg-brand-dark-gray border border-brand-border text-slate-400 hover:text-white transition-all"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                      <h2 className="text-xl font-bold text-white">{(t as any).ageGroupTitle || '연령대 선택'}</h2>
+                    </div>
+                    <button onClick={() => handleAction('set-age-group', 'youth')} className="action-button-hospital py-3.5 text-base">{(t as any).youth}</button>
+                    <button onClick={() => handleAction('set-age-group', 'adult')} className="action-button-hospital py-3.5 text-base">{(t as any).adult}</button>
+                    <button onClick={() => handleAction('set-age-group', 'senior')} className="action-button-hospital py-3.5 text-base">{(t as any).senior}</button>
+                  </div>
+                )}
+
+                {step === 'questionnaire-intro' && (
+                  <div className="space-y-4 w-full">
+                    <div className="flex items-center gap-4 mb-2">
+                      <button 
+                        onClick={() => setStep('ask-age-group')}
+                        className="p-2 rounded-full bg-brand-dark-gray border border-brand-border text-slate-400 hover:text-white transition-all"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                      <h2 className="text-xl font-bold text-white">{(t as any).questionnaireIntroTitle || '문항 검사 안내'}</h2>
+                    </div>
+                    <button 
+                      onClick={() => handleAction('start-questionnaire')}
+                      className="action-button-hospital w-full bg-brand-gold text-brand-black border-none py-4 text-base"
+                    >
+                      <Send className="w-5 h-5" />
+                      {(t as any).startQuestionnaire}
+                    </button>
+                    <button 
+                      onClick={() => handleAction('pta-intro-next')}
+                      className="w-full py-3 text-slate-500 font-bold text-xs hover:text-white transition-colors"
+                    >
+                      {(t as any).skipQuestionnaire}
+                    </button>
+                  </div>
+                )}
+
+                {step === 'questionnaire' && (
+                  <div className="bg-brand-black/40 backdrop-blur-md rounded-3xl p-8 border border-brand-gold/20 space-y-8">
+                    <div className="space-y-2">
+                      <span className="text-xs font-bold text-brand-gold uppercase tracking-widest">
+                        {(t as any).questionnaireTitle} ({questionIndex + 1} / {(questionnaireQuestions as any)[lang][formData.ageGroup || 'adult'].length})
+                      </span>
+                      <p className="text-xl font-bold text-white leading-relaxed">
+                        {(questionnaireQuestions as any)[lang][formData.ageGroup || 'adult'][questionIndex]}
+                      </p>
+                    </div>
+                    {formData.ageGroup === 'senior' ? (
+                      <div className="grid grid-cols-1 gap-3">
+                        <button 
+                          onClick={() => handleAction('answer-questionnaire', 4)}
+                          className="py-4 rounded-2xl bg-brand-gold text-brand-black font-bold shadow-lg shadow-brand-gold/20 hover:brightness-110 transition-all text-lg"
+                        >
+                          {(t as any).always}
+                        </button>
+                        <button 
+                          onClick={() => handleAction('answer-questionnaire', 2)}
+                          className="py-4 rounded-2xl bg-brand-dark-gray border border-brand-border text-white font-bold hover:bg-brand-gold/10 transition-all text-lg"
+                        >
+                          {(t as any).sometimes}
+                        </button>
+                        <button 
+                          onClick={() => handleAction('answer-questionnaire', 0)}
+                          className="py-4 rounded-2xl bg-brand-dark-gray border border-brand-border text-white font-bold hover:bg-brand-gold/10 transition-all text-lg"
+                        >
+                          {(t as any).no}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-4">
+                        <button 
+                          onClick={() => handleAction('answer-questionnaire', 0)}
+                          className="py-5 rounded-2xl bg-brand-dark-gray border border-brand-border text-white font-bold hover:bg-brand-gold/10 transition-all"
+                        >
+                          {t.no}
+                        </button>
+                        <button 
+                          onClick={() => handleAction('answer-questionnaire', 4)}
+                          className="py-5 rounded-2xl bg-brand-gold text-brand-black font-bold shadow-lg shadow-brand-gold/20 hover:brightness-110 transition-all"
+                        >
+                          {t.yes}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {step === 'pta-intro' && (
+                  <div className="space-y-4 w-full">
+                    <button 
+                      onClick={() => playTone(1000, 60)}
+                      className="w-full py-4 rounded-2xl bg-brand-black border border-brand-gold/30 text-brand-gold text-sm font-bold flex items-center justify-center gap-2 hover:bg-brand-gold/5 transition-all"
+                    >
+                      <Volume2 className="w-5 h-5" />
+                      {(t as any).checkVolume}
+                    </button>
+                    <button 
+                      onClick={() => handleAction('pta-start')}
+                      className="action-button-hospital w-full bg-brand-gold text-brand-black border-none py-6 text-xl"
+                    >
+                      {t.ptaStart}
                     </button>
                   </div>
                 )}
               </div>
-            )}
-
-            {step === 'pta-intro' && (
-              <div className="space-y-4 w-full">
-                <button 
-                  onClick={() => playTone(1000, 60)}
-                  className="w-full py-4 rounded-2xl bg-brand-black border border-brand-gold/30 text-brand-gold text-sm font-bold flex items-center justify-center gap-2 hover:bg-brand-gold/5 transition-all"
-                >
-                  <Volume2 className="w-5 h-5" />
-                  {(t as any).checkVolume}
-                </button>
-                <button 
-                  onClick={() => handleAction('pta-start')}
-                  className="action-button-hospital w-full bg-brand-gold text-brand-black border-none py-6 text-xl"
-                >
-                  {t.ptaStart}
-                </button>
-              </div>
-            )}
-
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Modals */}
       <AnimatePresence>
@@ -1958,21 +2020,28 @@ export default function App() {
           <button
             key={tab.id}
             onClick={() => {
+              if (tab.id === 'hearing' && activeTab === 'hearing') {
+                setShowFloatingMenu(!showFloatingMenu);
+                return;
+              }
               setActiveTab(tab.id);
               if (tab.id === 'hearing') {
+                setShowFloatingMenu(false);
                 setStep('welcome');
                 setMessages([
                   { id: 'welcome-1', type: 'bot', text: t.welcome },
-                  { id: 'welcome-2', type: 'bot', text: t.intro }
+                  { id: 'welcome-2', type: 'bot', text: '청력 검사나 인지 재활 게임을 시작하시려면 하단 [청력검사] 아이콘을 한 번 더 눌러주세요!' }
                 ]);
+              } else {
+                setShowFloatingMenu(false);
               }
             }}
             className={cn(
               "flex flex-col items-center gap-1 transition-all flex-1",
-              activeTab === tab.id ? "text-brand-gold" : "text-slate-500 hover:text-slate-300"
+              (activeTab === tab.id) ? "text-brand-gold" : "text-slate-500 hover:text-slate-300"
             )}
           >
-            <tab.icon className={cn("w-6 h-6", activeTab === tab.id && "animate-pulse")} />
+            <tab.icon className={cn("w-6 h-6", (activeTab === tab.id) && "animate-pulse")} />
             <span className="text-[11px] font-bold tracking-tight">{tab.label}</span>
           </button>
         ))}

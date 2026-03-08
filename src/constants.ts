@@ -282,7 +282,7 @@ export const translations = {
     next: "다음",
     skipQuestionnaire: "건너뛰고 바로 청력검사 하기",
     startQuestionnaireBtn: "문항검사 시작하기",
-    landingTitle: "나의 청각나이는?",
+    landingTitle: "나의 청력나이는?",
     landingSub: "무료 청력검사를 활용하세요!",
     landingBtn: "검사 시작하기",
     nameLabel: "이름",
