@@ -65,6 +65,18 @@ const MimiGame: React.FC<MimiGameProps> = ({ onClose, t }) => {
 
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    // Responsive canvas sizing
+    const updateCanvasSize = () => {
+      const container = canvas.parentElement;
+      if (container) {
+        canvas.width = container.clientWidth;
+        canvas.height = Math.min(container.clientHeight, 400);
+      }
+    };
+    updateCanvasSize();
+    window.addEventListener('resize', updateCanvasSize);
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -72,22 +84,22 @@ const MimiGame: React.FC<MimiGameProps> = ({ onClose, t }) => {
     
     // Game objects
     const player = {
-      x: 100,
-      y: 300,
-      width: 40,
-      height: 40,
+      x: 50,
+      y: 200,
+      width: 32,
+      height: 32,
       dy: 0,
       isGrounded: false,
       color: '#F27D26' // Mimi's orange
     };
 
     const platforms = [
-      { x: 0, y: 500, width: 800, height: 100, type: 'normal' },
-      { x: 300, y: 350, width: 150, height: 20, type: 'rhythm', freq: 440 },
-      { x: 550, y: 250, width: 150, height: 20, type: 'pitch', freq: 660 },
-      { x: 800, y: 400, width: 200, height: 20, type: 'normal' },
-      { x: 1100, y: 300, width: 150, height: 20, type: 'sequence', freq: 880, id: 1 },
-      { x: 1350, y: 200, width: 150, height: 20, type: 'sequence', freq: 1100, id: 2 },
+      { x: 0, y: 350, width: 2000, height: 100, type: 'normal' },
+      { x: 300, y: 250, width: 150, height: 20, type: 'rhythm', freq: 440 },
+      { x: 550, y: 150, width: 150, height: 20, type: 'pitch', freq: 660 },
+      { x: 800, y: 250, width: 200, height: 20, type: 'normal' },
+      { x: 1100, y: 200, width: 150, height: 20, type: 'sequence', freq: 880, id: 1 },
+      { x: 1350, y: 100, width: 150, height: 20, type: 'sequence', freq: 1100, id: 2 },
     ];
 
     const items = [
@@ -169,7 +181,8 @@ const MimiGame: React.FC<MimiGameProps> = ({ onClose, t }) => {
       });
 
       // Camera follow
-      cameraX = player.x - canvas.width / 3;
+      const targetCameraX = player.x - canvas.width / 3;
+      cameraX += (targetCameraX - cameraX) * 0.1;
       if (cameraX < 0) cameraX = 0;
 
       // Game over condition
@@ -179,15 +192,15 @@ const MimiGame: React.FC<MimiGameProps> = ({ onClose, t }) => {
             setGameState('gameover');
             return 0;
           }
-          player.x = 100;
-          player.y = 300;
+          player.x = cameraX + 50;
+          player.y = 100;
           player.dy = 0;
           return l - 1;
         });
       }
 
       // Level clear condition
-      if (player.x > 1500) {
+      if (player.x > 1800) {
         setGameState('levelclear');
       }
     };
@@ -238,16 +251,16 @@ const MimiGame: React.FC<MimiGameProps> = ({ onClose, t }) => {
       // Draw Mimi's ears
       ctx.beginPath();
       ctx.moveTo(player.x, player.y);
-      ctx.lineTo(player.x + 10, player.y - 15);
-      ctx.lineTo(player.x + 20, player.y);
+      ctx.lineTo(player.x + 8, player.y - 12);
+      ctx.lineTo(player.x + 16, player.y);
       ctx.fill();
       
       ctx.beginPath();
-      ctx.moveTo(player.x + player.width - 20, player.y);
-      ctx.lineTo(player.x + player.width - 10, player.y - 15);
+      ctx.moveTo(player.x + player.width - 16, player.y);
+      ctx.lineTo(player.x + player.width - 8, player.y - 12);
       ctx.lineTo(player.x + player.width, player.y);
       ctx.fill();
-
+ 
       ctx.restore();
     };
 
@@ -263,6 +276,7 @@ const MimiGame: React.FC<MimiGameProps> = ({ onClose, t }) => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('resize', updateCanvasSize);
     };
   }, [gameState, showVisualAid]);
 
@@ -380,8 +394,8 @@ const MimiGame: React.FC<MimiGameProps> = ({ onClose, t }) => {
               <div className="w-24 h-24 rounded-[32px] bg-brand-gold flex items-center justify-center mb-6 shadow-2xl shadow-brand-gold/20">
                 <Play className="w-12 h-12 text-brand-black fill-current" />
               </div>
-              <h2 className="text-4xl font-black text-white mb-4 tracking-tight">Ready for Adventure?</h2>
-              <p className="text-slate-400 max-w-md mb-8 leading-relaxed">
+              <h2 className="text-3xl sm:text-4xl font-black text-white mb-4 tracking-tight">Ready for Adventure?</h2>
+              <p className="text-slate-400 max-w-sm sm:max-w-md mb-8 leading-relaxed text-sm sm:text-base">
                 Help Mimi explore the world by listening to sounds. 
                 Jump on rhythm blocks and collect matching timbres!
               </p>
@@ -390,7 +404,7 @@ const MimiGame: React.FC<MimiGameProps> = ({ onClose, t }) => {
                   await initAudio();
                   setGameState('playing');
                 }}
-                className="px-12 py-5 bg-brand-gold text-brand-black font-black text-xl rounded-2xl shadow-xl shadow-brand-gold/20 hover:scale-105 transition-all"
+                className="px-10 py-4 sm:px-12 sm:py-5 bg-brand-gold text-brand-black font-black text-lg sm:text-xl rounded-2xl shadow-xl shadow-brand-gold/20 hover:scale-105 active:scale-95 transition-all"
               >
                 START MISSION
               </button>
@@ -456,36 +470,36 @@ const MimiGame: React.FC<MimiGameProps> = ({ onClose, t }) => {
       </div>
 
       {/* Mobile Controls */}
-      <div className="absolute bottom-24 left-8 right-8 flex justify-between items-center md:hidden z-20">
-        <div className="flex gap-4">
+      <div className="absolute bottom-12 left-4 right-4 flex justify-between items-center lg:hidden z-20">
+        <div className="flex gap-3">
           <button 
-            onPointerDown={() => (window as any).mimiControls?.setLeft(true)}
-            onPointerUp={() => (window as any).mimiControls?.setLeft(false)}
-            onPointerLeave={() => (window as any).mimiControls?.setLeft(false)}
-            className="w-16 h-16 rounded-2xl bg-brand-dark-gray/60 backdrop-blur-md border border-brand-border flex items-center justify-center active:bg-brand-gold/20 transition-all"
+            onPointerDown={(e) => { e.preventDefault(); (window as any).mimiControls?.setLeft(true); }}
+            onPointerUp={(e) => { e.preventDefault(); (window as any).mimiControls?.setLeft(false); }}
+            onPointerLeave={(e) => { e.preventDefault(); (window as any).mimiControls?.setLeft(false); }}
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-brand-dark-gray/60 backdrop-blur-md border border-brand-border flex items-center justify-center active:bg-brand-gold/20 transition-all touch-none"
           >
-            <ArrowLeft className="w-8 h-8 text-white" />
+            <ArrowLeft className="w-7 h-7 sm:w-8 h-8 text-white" />
           </button>
           <button 
-            onPointerDown={() => (window as any).mimiControls?.setRight(true)}
-            onPointerUp={() => (window as any).mimiControls?.setRight(false)}
-            onPointerLeave={() => (window as any).mimiControls?.setRight(false)}
-            className="w-16 h-16 rounded-2xl bg-brand-dark-gray/60 backdrop-blur-md border border-brand-border flex items-center justify-center active:bg-brand-gold/20 transition-all"
+            onPointerDown={(e) => { e.preventDefault(); (window as any).mimiControls?.setRight(true); }}
+            onPointerUp={(e) => { e.preventDefault(); (window as any).mimiControls?.setRight(false); }}
+            onPointerLeave={(e) => { e.preventDefault(); (window as any).mimiControls?.setRight(false); }}
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-brand-dark-gray/60 backdrop-blur-md border border-brand-border flex items-center justify-center active:bg-brand-gold/20 transition-all touch-none"
           >
-            <ArrowRight className="w-8 h-8 text-white" />
+            <ArrowRight className="w-7 h-7 sm:w-8 h-8 text-white" />
           </button>
         </div>
         <button 
-          onPointerDown={() => (window as any).mimiControls?.setJump(true)}
-          onPointerUp={() => (window as any).mimiControls?.setJump(false)}
-          className="w-20 h-20 rounded-full bg-brand-gold text-brand-black flex items-center justify-center shadow-xl shadow-brand-gold/20 active:scale-90 transition-all"
+          onPointerDown={(e) => { e.preventDefault(); (window as any).mimiControls?.setJump(true); }}
+          onPointerUp={(e) => { e.preventDefault(); (window as any).mimiControls?.setJump(false); }}
+          className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-brand-gold text-brand-black flex items-center justify-center shadow-xl shadow-brand-gold/20 active:scale-90 transition-all touch-none"
         >
-          <Zap className="w-10 h-10 fill-current" />
+          <Zap className="w-8 h-8 sm:w-10 sm:h-10 fill-current" />
         </button>
       </div>
 
-      {/* Controls Help */}
-      <div className="mt-12 grid grid-cols-3 gap-8 max-w-2xl w-full">
+      {/* Controls Help (Hidden on mobile) */}
+      <div className="hidden md:grid mt-12 grid-cols-3 gap-8 max-w-2xl w-full">
         <div className="flex items-center gap-4 bg-brand-dark-gray/20 p-4 rounded-2xl border border-brand-border">
           <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-white font-black">←</div>
           <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-white font-black">→</div>

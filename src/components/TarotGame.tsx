@@ -231,8 +231,8 @@ const TarotGame: React.FC<TarotGameProps> = ({ onClose, lang }) => {
                   </p>
                 </div>
 
-                <div className="flex-1 w-full overflow-y-auto p-4 custom-scrollbar touch-pan-y relative z-20 min-h-[300px]">
-                  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-10 gap-3">
+                <div className="flex-1 w-full overflow-y-auto p-2 sm:p-4 custom-scrollbar touch-pan-y relative z-20 min-h-[250px] sm:min-h-[300px]">
+                  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-10 gap-2 sm:gap-3">
                     {shuffledIndices.map((idx) => {
                       const card = ALL_CARDS[idx];
                       const isSelected = selectedCards.find(c => c.id === card.id);
@@ -244,9 +244,9 @@ const TarotGame: React.FC<TarotGameProps> = ({ onClose, lang }) => {
                           whileTap={{ scale: 0.95 }}
                           onTap={() => handlePickCard(card)}
                           className={cn(
-                            "relative aspect-[2/3] rounded-xl cursor-pointer transition-all active:opacity-70 z-30 pointer-events-auto select-none touch-manipulation",
+                            "relative aspect-[2/3] rounded-lg sm:rounded-xl cursor-pointer transition-all active:opacity-70 z-30 pointer-events-auto select-none touch-manipulation",
                             isSelected 
-                              ? 'ring-4 ring-brand-gold shadow-[0_0_20px_rgba(197,160,89,0.4)]' 
+                              ? 'ring-2 sm:ring-4 ring-brand-gold shadow-[0_0_15px_rgba(197,160,89,0.4)]' 
                               : 'bg-brand-dark-gray border border-white/10 hover:border-brand-gold/50 shadow-lg'
                           )}
                         >

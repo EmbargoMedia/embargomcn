@@ -446,10 +446,10 @@ export default function SoundBlockTetris({ onClose, language, translations: t }:
       </div>
 
       {/* Main Game Interface */}
-      <div className="flex-1 flex items-center justify-center p-4 gap-12 relative">
+      <div className="flex-1 flex flex-col lg:flex-row items-center justify-center p-4 gap-4 lg:gap-12 relative overflow-hidden">
         
-        {/* Left Sidebar: Missions & Info */}
-        <div className="hidden xl:flex flex-col gap-6 w-64">
+        {/* Left Sidebar: Missions & Info (Hidden on mobile) */}
+        <div className="hidden xl:flex flex-col gap-6 w-64 shrink-0">
           <div className="bg-white/5 p-6 rounded-[32px] border border-white/10 space-y-4">
             <div className="flex items-center gap-2 mb-2">
               <Brain className="w-5 h-5 text-brand-gold" />
@@ -512,14 +512,14 @@ export default function SoundBlockTetris({ onClose, language, translations: t }:
              </div>
           </div>
 
-          <div className="bg-[#111] p-3 rounded-[40px] border-[8px] border-white/5 shadow-2xl shadow-brand-gold/5">
-            <div className="grid grid-cols-10 gap-1 bg-black p-1 rounded-[28px] overflow-hidden">
+          <div className="bg-[#111] p-2 sm:p-3 rounded-[32px] sm:rounded-[40px] border-[4px] sm:border-[8px] border-white/5 shadow-2xl shadow-brand-gold/5">
+            <div className="grid grid-cols-10 gap-[2px] sm:gap-1 bg-black p-1 rounded-[24px] sm:rounded-[28px] overflow-hidden">
               {displayGrid.map((row, y) => (
                 row.map((cell, x) => (
                   <div 
                     key={`${y}-${x}`} 
                     className={cn(
-                      "w-7 h-7 sm:w-9 sm:h-9 rounded-lg transition-all duration-150 relative overflow-hidden",
+                      "w-[6vw] h-[6vw] max-w-[32px] max-h-[32px] sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-[4px] sm:rounded-lg transition-all duration-150 relative overflow-hidden",
                       cell ? COLORS[cell] : "bg-white/[0.03]"
                     )}
                   >
@@ -658,20 +658,50 @@ export default function SoundBlockTetris({ onClose, language, translations: t }:
         </div>
 
         {/* Mobile Controls Overlay */}
-        <div className="absolute bottom-10 left-0 right-0 flex flex-col items-center gap-4 lg:hidden px-6">
-          <div className="grid grid-cols-3 gap-3">
+        <div className="flex flex-col items-center gap-4 lg:hidden px-4 mb-4 shrink-0">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
             <div />
-            <button onClick={rotatePiece} className="w-16 h-16 bg-white/10 rounded-3xl flex items-center justify-center border border-white/10 active:scale-90 transition-transform"><ArrowUp className="w-8 h-8 text-white" /></button>
+            <button 
+              onPointerDown={(e) => { e.preventDefault(); rotatePiece(); }} 
+              className="w-14 h-14 sm:w-16 sm:h-16 bg-white/10 rounded-2xl sm:rounded-3xl flex items-center justify-center border border-white/10 active:scale-90 active:bg-white/20 transition-all"
+            >
+              <ArrowUp className="w-6 h-6 sm:w-8 h-8 text-white" />
+            </button>
             <div />
-            <button onClick={() => movePiece(-1, 0)} className="w-16 h-16 bg-white/10 rounded-3xl flex items-center justify-center border border-white/10 active:scale-90 transition-transform"><ChevronLeft className="w-8 h-8 text-white" /></button>
-            <button onClick={() => movePiece(0, 1)} className="w-16 h-16 bg-white/10 rounded-3xl flex items-center justify-center border border-white/10 active:scale-90 transition-transform"><ChevronDown className="w-8 h-8 text-white" /></button>
-            <button onClick={() => movePiece(1, 0)} className="w-16 h-16 bg-white/10 rounded-3xl flex items-center justify-center border border-white/10 active:scale-90 transition-transform"><ChevronRight className="w-8 h-8 text-white" /></button>
+            
+            <button 
+              onPointerDown={(e) => { e.preventDefault(); movePiece(-1, 0); }} 
+              className="w-14 h-14 sm:w-16 sm:h-16 bg-white/10 rounded-2xl sm:rounded-3xl flex items-center justify-center border border-white/10 active:scale-90 active:bg-white/20 transition-all"
+            >
+              <ChevronLeft className="w-6 h-6 sm:w-8 h-8 text-white" />
+            </button>
+            <button 
+              onPointerDown={(e) => { e.preventDefault(); movePiece(0, 1); }} 
+              className="w-14 h-14 sm:w-16 sm:h-16 bg-white/10 rounded-2xl sm:rounded-3xl flex items-center justify-center border border-white/10 active:scale-90 active:bg-white/20 transition-all"
+            >
+              <ChevronDown className="w-6 h-6 sm:w-8 h-8 text-white" />
+            </button>
+            <button 
+              onPointerDown={(e) => { e.preventDefault(); movePiece(1, 0); }} 
+              className="w-14 h-14 sm:w-16 sm:h-16 bg-white/10 rounded-2xl sm:rounded-3xl flex items-center justify-center border border-white/10 active:scale-90 active:bg-white/20 transition-all"
+            >
+              <ChevronRight className="w-6 h-6 sm:w-8 h-8 text-white" />
+            </button>
+
+            <div />
+            <button 
+              onPointerDown={(e) => { e.preventDefault(); while(movePiece(0, 1)); }} 
+              className="w-14 h-14 sm:w-16 sm:h-16 bg-brand-gold/20 rounded-2xl sm:rounded-3xl flex items-center justify-center border border-brand-gold/30 active:scale-90 active:bg-brand-gold/40 transition-all"
+            >
+              <Zap className="w-6 h-6 sm:w-8 h-8 text-brand-gold" />
+            </button>
+            <div />
           </div>
         </div>
       </div>
 
-      {/* Footer: Diagnostic Status */}
-      <div className="p-4 bg-black/60 border-t border-white/10 flex items-center justify-between px-10">
+      {/* Footer: Diagnostic Status (Hidden on small mobile) */}
+      <div className="hidden sm:flex p-4 bg-black/60 border-t border-white/10 items-center justify-between px-10 shrink-0">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
