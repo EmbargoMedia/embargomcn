@@ -1595,21 +1595,21 @@ export default function App() {
               className="w-full max-w-4xl max-h-[90vh] bg-white shadow-2xl rounded-[32px] overflow-hidden border border-slate-200 flex flex-col"
             >
               {/* Modal Header */}
-              <div className="bg-emerald-900 p-6 md:p-8 text-white flex justify-between items-center shrink-0">
+              <div className="bg-brand-black p-6 md:p-8 text-white flex justify-between items-center shrink-0 border-b border-brand-gold/20">
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase">라이프리듬 분석 레포트</h1>
-                  <p className="text-emerald-200 text-sm">AI Wellness & Energy Analysis</p>
+                  <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase text-white">라이프리듬 분석 레포트</h1>
+                  <p className="text-brand-gold text-sm font-bold">AI Wellness & Energy Analysis</p>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="text-right hidden md:block">
-                    <p className="text-emerald-400 text-[10px] uppercase font-bold tracking-widest">Date</p>
-                    <p className="font-bold text-sm">{new Date().toLocaleDateString()}</p>
+                    <p className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">Date</p>
+                    <p className="font-bold text-sm text-white">{new Date().toLocaleDateString()}</p>
                   </div>
                   <button 
                     onClick={() => setShowLifeRhythmReport(false)}
                     className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
                   >
-                    <X className="w-6 h-6" />
+                    <X className="w-6 h-6 text-white" />
                   </button>
                 </div>
               </div>
@@ -1617,20 +1617,20 @@ export default function App() {
               {/* Modal Content */}
               <div id="life-rhythm-report-content" className="flex-1 overflow-y-auto p-6 md:p-8 space-y-10 bg-white print:p-0">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-                  <div className="bg-emerald-50 p-4 rounded-2xl">
-                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Name</p>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <p className="text-[10px] font-bold text-purple-600 uppercase tracking-widest mb-1">Name</p>
                     <p className="font-bold text-slate-900">{formData.name || 'User'}</p>
                   </div>
-                  <div className="bg-emerald-50 p-4 rounded-2xl">
-                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Birth Date</p>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <p className="text-[10px] font-bold text-purple-600 uppercase tracking-widest mb-1">Birth Date</p>
                     <p className="font-bold text-slate-900">{formData.birthDate || 'N/A'}</p>
                   </div>
-                  <div className="bg-emerald-50 p-4 rounded-2xl">
-                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Birth Time</p>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <p className="text-[10px] font-bold text-purple-600 uppercase tracking-widest mb-1">Birth Time</p>
                     <p className="font-bold text-slate-900">{formData.birthTime || 'N/A'}</p>
                   </div>
-                  <div className="bg-emerald-50 p-4 rounded-2xl">
-                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1">Analysis Type</p>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <p className="text-[10px] font-bold text-purple-600 uppercase tracking-widest mb-1">Analysis Type</p>
                     <p className="font-bold text-slate-900 uppercase">Wellness</p>
                   </div>
                 </div>
@@ -1638,35 +1638,35 @@ export default function App() {
                 <div className="space-y-6">
                   <div className="space-y-4">
                     <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                      <span className="w-1.5 h-6 bg-emerald-600 rounded-full"></span>
+                      <span className="w-1.5 h-6 bg-brand-gold rounded-full"></span>
                       1️⃣ 라이프 리듬 요약
                     </h2>
-                    <div className="bg-emerald-50/50 p-6 rounded-3xl border border-emerald-100">
+                    <div className="bg-purple-50/50 p-6 rounded-3xl border border-purple-100">
                       <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{lifeRhythmResult.summary}</p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                      <span className="w-1.5 h-6 bg-emerald-600 rounded-full"></span>
+                      <span className="w-1.5 h-6 bg-brand-gold rounded-full"></span>
                       2️⃣ 오행 균형 분석
                     </h2>
-                    <div className="bg-emerald-50/50 p-6 rounded-3xl border border-emerald-100">
+                    <div className="bg-purple-50/50 p-6 rounded-3xl border border-purple-100">
                       <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{lifeRhythmResult.balanceAnalysis}</p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                      <span className="w-1.5 h-6 bg-emerald-600 rounded-full"></span>
+                      <span className="w-1.5 h-6 bg-brand-gold rounded-full"></span>
                       3️⃣ 청각 건강 관리 가이드 (금(金) 요소)
                     </h2>
-                    <div className="bg-emerald-50/50 p-6 rounded-3xl border border-emerald-100 space-y-4">
+                    <div className="bg-purple-50/50 p-6 rounded-3xl border border-purple-100 space-y-4">
                       <p className="text-slate-700 leading-relaxed">{lifeRhythmResult.hearingGuide.content}</p>
                       <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {lifeRhythmResult.hearingGuide.tips.map((tip: string, idx: number) => (
-                          <li key={idx} className="flex gap-3 items-center bg-white p-3 rounded-xl border border-emerald-100 text-sm text-slate-600">
-                            <Ear className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <li key={idx} className="flex gap-3 items-center bg-white p-3 rounded-xl border border-purple-100 text-sm text-slate-600">
+                            <Ear className="w-4 h-4 text-brand-gold shrink-0" />
                             {tip}
                           </li>
                         ))}
@@ -1676,34 +1676,34 @@ export default function App() {
 
                   <div className="space-y-4">
                     <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                      <span className="w-1.5 h-6 bg-emerald-600 rounded-full"></span>
+                      <span className="w-1.5 h-6 bg-brand-gold rounded-full"></span>
                       4️⃣ 피부 및 신체 상태 경향
                     </h2>
-                    <div className="bg-emerald-50/50 p-6 rounded-3xl border border-emerald-100">
+                    <div className="bg-purple-50/50 p-6 rounded-3xl border border-purple-100">
                       <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{lifeRhythmResult.bodyTrend}</p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                      <span className="w-1.5 h-6 bg-emerald-600 rounded-full"></span>
+                      <span className="w-1.5 h-6 bg-brand-gold rounded-full"></span>
                       5️⃣ 체질 관리 가이드
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100">
-                        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-2">추천 운동</p>
+                      <div className="bg-purple-50/50 p-5 rounded-2xl border border-purple-100">
+                        <p className="text-[10px] font-bold text-purple-600 uppercase tracking-widest mb-2">추천 운동</p>
                         <p className="text-sm text-slate-700">{lifeRhythmResult.wellnessGuide.exercise}</p>
                       </div>
-                      <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100">
-                        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-2">식습관</p>
+                      <div className="bg-purple-50/50 p-5 rounded-2xl border border-purple-100">
+                        <p className="text-[10px] font-bold text-purple-600 uppercase tracking-widest mb-2">식습관</p>
                         <p className="text-sm text-slate-700">{lifeRhythmResult.wellnessGuide.diet}</p>
                       </div>
-                      <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100">
-                        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-2">수면 습관</p>
+                      <div className="bg-purple-50/50 p-5 rounded-2xl border border-purple-100">
+                        <p className="text-[10px] font-bold text-purple-600 uppercase tracking-widest mb-2">수면 습관</p>
                         <p className="text-sm text-slate-700">{lifeRhythmResult.wellnessGuide.sleep}</p>
                       </div>
-                      <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100">
-                        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-2">스트레스 관리</p>
+                      <div className="bg-purple-50/50 p-5 rounded-2xl border border-purple-100">
+                        <p className="text-[10px] font-bold text-purple-600 uppercase tracking-widest mb-2">스트레스 관리</p>
                         <p className="text-sm text-slate-700">{lifeRhythmResult.wellnessGuide.stress}</p>
                       </div>
                     </div>
@@ -1711,25 +1711,25 @@ export default function App() {
 
                   <div className="space-y-4">
                     <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                      <span className="w-1.5 h-6 bg-emerald-600 rounded-full"></span>
+                      <span className="w-1.5 h-6 bg-brand-gold rounded-full"></span>
                       6️⃣ 하루 생활 리듬 추천
                     </h2>
-                    <div className="bg-slate-900 rounded-3xl p-8 text-white space-y-6">
+                    <div className="bg-brand-black rounded-3xl p-8 text-white space-y-6 border border-brand-gold/20">
                       <div className="grid grid-cols-2 gap-8">
                         <div>
-                          <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest mb-2">집중하기 좋은 시간</p>
+                          <p className="text-brand-gold text-[10px] font-bold uppercase tracking-widest mb-2">집중하기 좋은 시간</p>
                           <p className="text-xl font-bold">{lifeRhythmResult.dailyRhythm.focusTime}</p>
                         </div>
                         <div>
-                          <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest mb-2">휴식이 필요한 시간</p>
+                          <p className="text-brand-gold text-[10px] font-bold uppercase tracking-widest mb-2">휴식이 필요한 시간</p>
                           <p className="text-xl font-bold">{lifeRhythmResult.dailyRhythm.restTime}</p>
                         </div>
                       </div>
                       <div className="space-y-3">
-                        <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest">건강 유지 습관</p>
+                        <p className="text-brand-gold text-[10px] font-bold uppercase tracking-widest">건강 유지 습관</p>
                         <div className="flex flex-wrap gap-2">
                           {lifeRhythmResult.dailyRhythm.habits.map((habit: string, idx: number) => (
-                            <span key={idx} className="px-3 py-1 bg-white/10 rounded-full text-xs font-medium">{habit}</span>
+                            <span key={idx} className="px-3 py-1 bg-white/10 rounded-full text-xs font-medium border border-white/10">{habit}</span>
                           ))}
                         </div>
                       </div>
@@ -1762,7 +1762,7 @@ export default function App() {
                         });
                       }
                     }}
-                    className="flex-1 py-4 rounded-2xl bg-slate-900 text-white font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all"
+                    className="flex-1 py-4 rounded-2xl bg-brand-black text-white font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all border border-brand-gold/20"
                   >
                     <Download className="w-5 h-5" /> Download PDF
                   </button>
@@ -1797,7 +1797,7 @@ export default function App() {
                       });
                     }
                   }}
-                  className="flex-1 py-4 rounded-2xl bg-emerald-600 text-white font-bold flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20"
+                  className="flex-1 py-4 rounded-2xl bg-brand-gold text-brand-black font-bold flex items-center justify-center gap-2 hover:brightness-110 transition-all shadow-lg shadow-brand-gold/20"
                 >
                   <Share2 className="w-5 h-5" /> Share to Chat
                 </button>
