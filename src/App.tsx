@@ -660,14 +660,25 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="relative aspect-[3/4] max-h-[45vh] mx-auto rounded-[40px] overflow-hidden shadow-2xl shadow-brand-gold/10"
+            className="relative aspect-[3/4] max-h-[45vh] mx-auto rounded-[40px] overflow-hidden shadow-2xl shadow-brand-gold/10 group"
           >
             <img 
-              src={landingImage || "https://images.unsplash.com/photo-1583417319070-4a69db38a482?auto=format&fit=crop&q=80&w=800"} 
+              src={landingImage || "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&q=80&w=800"} 
               alt="Hearing health profile" 
-              className="w-full h-full object-cover opacity-90"
+              className="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-110"
               referrerPolicy="no-referrer"
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-transparent to-transparent opacity-60" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.8, type: "spring" }}
+                className="w-32 h-32 bg-brand-gold/20 backdrop-blur-md rounded-full flex items-center justify-center border border-brand-gold/30"
+              >
+                <Ear className="w-16 h-16 text-brand-gold" />
+              </motion.div>
+            </div>
           </motion.div>
         </div>
 
@@ -832,11 +843,19 @@ export default function App() {
                     <p className="text-xs text-brand-gold font-bold uppercase tracking-[0.2em]">{(t as any).aiReport}</p>
                   </div>
 
-                  <div className="bg-brand-black rounded-[24px] p-8 text-center border border-brand-gold/30 shadow-[0_0_20px_rgba(197,160,89,0.1)]">
-                    <p className="text-brand-gold text-lg font-bold mb-2">{(t as any).hearingAgeScreening}</p>
-                    <h3 className="text-3xl font-black text-white">
-                      {(t as any).hearingAgeResult.replace('{age}', calculateHearingAge(prediction.score, parseInt(formData.age) || 30))}
-                    </h3>
+                  <div className="bg-brand-black rounded-[24px] p-8 text-center border border-brand-gold/30 shadow-[0_0_20px_rgba(197,160,89,0.1)] relative overflow-hidden">
+                    <div className="absolute -right-4 -top-4 opacity-10">
+                      <Ear className="w-24 h-24 text-brand-gold rotate-12" />
+                    </div>
+                    <div className="relative z-10">
+                      <div className="w-16 h-16 bg-brand-gold/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Ear className="w-8 h-8 text-brand-gold" />
+                      </div>
+                      <p className="text-brand-gold text-lg font-bold mb-2">{(t as any).hearingAgeScreening}</p>
+                      <h3 className="text-3xl font-black text-white">
+                        {(t as any).hearingAgeResult.replace('{age}', calculateHearingAge(prediction.score, parseInt(formData.age) || 30))}
+                      </h3>
+                    </div>
                   </div>
 
                   {formData.ageGroup === 'senior' && questionnaireAnswers.length > 0 && (
