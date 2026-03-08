@@ -259,10 +259,19 @@ export default function App() {
   const oscillator = useRef<OscillatorNode | null>(null);
   const gainNode = useRef<GainNode | null>(null);
 
-  const initAudio = () => {
+  const initAudio = async () => {
     if (!audioContext.current) {
       audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
+    if (audioContext.current.state === 'suspended') {
+      await audioContext.current.resume();
+    }
+    // Play a silent buffer to unlock audio on mobile
+    const buffer = audioContext.current.createBuffer(1, 1, 22050);
+    const source = audioContext.current.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioContext.current.destination);
+    source.start(0);
   };
 
   const playTone = async (freq: number, db: number) => {
@@ -647,14 +656,14 @@ export default function App() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
-          onClick={() => {
+          onClick={async () => {
             setShowLanding(false);
             setMessages([
               { id: '1', type: 'bot', text: t.welcome },
               { id: '2', type: 'bot', text: t.intro }
             ]);
             setStep('welcome');
-            initAudio();
+            await initAudio();
           }}
           className="w-full max-w-md py-6 rounded-full bg-brand-gold text-brand-black font-bold text-xl shadow-xl shadow-brand-gold/20 mt-8 mb-4 flex items-center justify-center gap-2"
         >

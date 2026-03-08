@@ -126,19 +126,28 @@ export default function SoundBlockTetris({ onClose, language, translations: t }:
 
   // --- Audio Engine ---
 
-  const initAudio = () => {
+  const initAudio = async () => {
     if (!audioCtx.current) {
       audioCtx.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       gainNode.current = audioCtx.current.createGain();
       gainNode.current.connect(audioCtx.current.destination);
     }
     if (audioCtx.current.state === 'suspended') {
-      audioCtx.current.resume();
+      await audioCtx.current.resume();
     }
+    // Play a silent buffer to unlock audio on mobile
+    const buffer = audioCtx.current.createBuffer(1, 1, 22050);
+    const source = audioCtx.current.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioCtx.current.destination);
+    source.start(0);
   };
 
-  const playTone = useCallback((freq: number, duration: number = 0.2, type: OscillatorType = 'sine', volumeMult: number = 1) => {
+  const playTone = useCallback(async (freq: number, duration: number = 0.2, type: OscillatorType = 'sine', volumeMult: number = 1) => {
     if (!audioCtx.current || !gainNode.current) return;
+    if (audioCtx.current.state === 'suspended') {
+      await audioCtx.current.resume();
+    }
     const osc = audioCtx.current.createOscillator();
     const g = audioCtx.current.createGain();
     
@@ -342,8 +351,8 @@ export default function SoundBlockTetris({ onClose, language, translations: t }:
     };
   }, [gameState, activePiece, grid, level, successRate]);
 
-  const startGame = () => {
-    initAudio();
+  const startGame = async () => {
+    await initAudio();
     setGrid(Array(ROWS).fill(null).map(() => Array(COLS).fill('')));
     setActivePiece(createPiece());
     setNextPiece(createPiece());

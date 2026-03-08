@@ -24,14 +24,26 @@ const MimiGame: React.FC<MimiGameProps> = ({ onClose, t }) => {
   // Audio context for missions
   const audioCtxRef = useRef<AudioContext | null>(null);
   
-  const initAudio = () => {
+  const initAudio = async () => {
     if (!audioCtxRef.current) {
       audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
+    if (audioCtxRef.current.state === 'suspended') {
+      await audioCtxRef.current.resume();
+    }
+    // Play a silent buffer to unlock audio on mobile
+    const buffer = audioCtxRef.current.createBuffer(1, 1, 22050);
+    const source = audioCtxRef.current.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioCtxRef.current.destination);
+    source.start(0);
   };
 
-  const playSound = (freq: number, type: OscillatorType = 'sine', duration: number = 0.3) => {
+  const playSound = async (freq: number, type: OscillatorType = 'sine', duration: number = 0.3) => {
     if (!audioCtxRef.current) return;
+    if (audioCtxRef.current.state === 'suspended') {
+      await audioCtxRef.current.resume();
+    }
     const osc = audioCtxRef.current.createOscillator();
     const gain = audioCtxRef.current.createGain();
     
@@ -374,8 +386,8 @@ const MimiGame: React.FC<MimiGameProps> = ({ onClose, t }) => {
                 Jump on rhythm blocks and collect matching timbres!
               </p>
               <button 
-                onClick={() => {
-                  initAudio();
+                onClick={async () => {
+                  await initAudio();
                   setGameState('playing');
                 }}
                 className="px-12 py-5 bg-brand-gold text-brand-black font-black text-xl rounded-2xl shadow-xl shadow-brand-gold/20 hover:scale-105 transition-all"
