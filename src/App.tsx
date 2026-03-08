@@ -56,6 +56,7 @@ import { generateLandingImage } from './services/imageService';
 import SoundBlockTetris from './components/SoundBlockTetris';
 import TarotGame from './components/TarotGame';
 import WelfareFinder from './components/WelfareFinder';
+import HumanBodyDiagram from './components/HumanBodyDiagram';
 import { cn } from './utils/cn';
 import { translations, Language, healthTips, questionnaireQuestions } from './constants';
 
@@ -528,9 +529,11 @@ export default function App() {
 
       case 'finish-test':
         const fullData: HearingData = {
-          ...formData,
           age: parseInt(formData.age) || 30,
-          ptaResults: ptaResults,
+          gender: formData.gender,
+          lifestyle: [], // Default empty as it's not in formData yet
+          symptoms: [], // Default empty as it's not in formData yet
+          ptaResults: ptaResults.map(r => r.threshold),
         };
         const res = await predictHearingRisk(fullData);
         setPrediction(res);
@@ -1735,6 +1738,39 @@ export default function App() {
                       </div>
                     </div>
                   </div>
+
+                  <div className="space-y-4">
+                    <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                      <span className="w-1.5 h-6 bg-brand-gold rounded-full"></span>
+                      7️⃣ 인체 구조 및 에너지 분석
+                    </h2>
+                    <HumanBodyDiagram />
+                  </div>
+
+                  {/* Consultant's Closing Note */}
+                  <div className="pt-10 border-t border-slate-100">
+                    <div className="bg-slate-50 p-8 rounded-[40px] border border-slate-200 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-4 opacity-5">
+                        <Sparkles className="w-20 h-20 text-brand-gold" />
+                      </div>
+                      <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <Info className="w-5 h-5 text-brand-gold" />
+                        컨설턴트의 조언
+                      </h3>
+                      <p className="text-slate-700 leading-relaxed italic">
+                        "{formData.name}님, 오늘 분석해드린 라이프리듬은 {formData.name}님의 타고난 에너지를 가장 조화롭게 사용하는 방법을 제안해 드린 것입니다. 
+                        매일의 작은 습관이 모여 {formData.name}님의 건강한 삶을 완성합니다. 
+                        오블리주와 함께 더 맑고 선명한 일상을 만들어가시길 진심으로 응원합니다."
+                      </p>
+                      <div className="mt-6 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-brand-gold flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-brand-gold/20">O</div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-900">OBLIGE Wellness Consultant</p>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-widest">AI Analysis Team</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="p-6 bg-slate-50 rounded-[24px] border border-slate-100">
@@ -1751,7 +1787,12 @@ export default function App() {
                     onClick={() => {
                       const content = document.getElementById('life-rhythm-report-content');
                       if (content) {
-                        html2canvas(content).then(canvas => {
+                        html2canvas(content, {
+                          scale: 2,
+                          useCORS: true,
+                          logging: false,
+                          backgroundColor: '#ffffff'
+                        }).then(canvas => {
                           const imgData = canvas.toDataURL('image/png');
                           const pdf = new jsPDF('p', 'mm', 'a4');
                           const imgProps = pdf.getImageProperties(imgData);
@@ -1777,7 +1818,12 @@ export default function App() {
                   onClick={() => {
                     const content = document.getElementById('life-rhythm-report-content');
                     if (content) {
-                      html2canvas(content).then(canvas => {
+                      html2canvas(content, {
+                        scale: 2,
+                        useCORS: true,
+                        logging: false,
+                        backgroundColor: '#ffffff'
+                      }).then(canvas => {
                         const imgData = canvas.toDataURL('image/png');
                         setMessages(prev => [...prev, {
                           id: `life-rhythm-share-${Date.now()}`,

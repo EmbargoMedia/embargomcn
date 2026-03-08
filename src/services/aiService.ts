@@ -1,76 +1,61 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+const HEARING_RISK_SYSTEM_INSTRUCTION = `You are an expert audiologist and health data analyst. 
+Your task is to predict hearing loss risk based on user data (age, gender, lifestyle, symptoms).
+Provide a professional, data-driven assessment.
+Return the result in JSON format with the following keys:
+- riskLevel: "Low", "Moderate", "High", or "Critical"
+- riskScore: 0-100
+- analysis: A detailed explanation of the risk factors.
+- recommendations: A list of specific actions the user should take.
+- followUp: Suggested next steps (e.g., "See a specialist", "Retest in 6 months").`;
 
 export interface HearingData {
   age: number;
   gender: string;
-  noiseExposure: boolean;
-  tinnitus: boolean;
-  existingHearingIssues: boolean;
-  ptaResults: {
-    frequency: number;
-    threshold: number;
-  }[];
+  lifestyle: string[];
+  symptoms: string[];
+  ptaResults?: number[];
 }
 
 export async function predictHearingRisk(data: HearingData) {
-  const prompt = `
-    Analyze the following hearing test data and predict the risk of hearing loss.
-    
-    User Profile:
-    - Age: ${data.age}
-    - Gender: ${data.gender}
-    - Noise Exposure: ${data.noiseExposure ? "Yes" : "No"}
-    - Tinnitus: ${data.tinnitus ? "Yes" : "No"}
-    - Existing Issues: ${data.existingHearingIssues ? "Yes" : "No"}
-    
-    Pure Tone Audiometry (PTA) Thresholds (dB HL):
-    ${data.ptaResults.map(r => `- ${r.frequency}Hz: ${r.threshold}dB`).join("\n")}
-    
-    Please provide:
-    1. A risk score (0-100).
-    2. A classification grade (Normal, Mild, Moderate, Severe, Profound).
-    3. A brief professional recommendation.
-    4. A summary of the audiogram analysis.
-  `;
-
   try {
+    const prompt = `Analyze hearing risk for:
+    Age: ${data.age}
+    Gender: ${data.gender}
+    Lifestyle: ${data.lifestyle.join(", ")}
+    Symptoms: ${data.symptoms.join(", ")}
+    ${data.ptaResults ? `PTA Results: ${data.ptaResults.join(", ")}` : ""}`;
+
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
+        systemInstruction: HEARING_RISK_SYSTEM_INSTRUCTION,
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            score: { type: Type.NUMBER },
-            grade: { type: Type.STRING },
-            recommendation: { type: Type.STRING },
+            riskLevel: { type: Type.STRING },
+            riskScore: { type: Type.NUMBER },
             analysis: { type: Type.STRING },
+            recommendations: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            },
+            followUp: { type: Type.STRING }
           },
-          required: ["score", "grade", "recommendation", "analysis"],
-        },
-      },
+          required: ["riskLevel", "riskScore", "analysis", "recommendations", "followUp"]
+        }
+      }
     });
 
-    return JSON.parse(response.text || "{}");
+    return JSON.parse(response.text);
   } catch (error) {
     console.error("AI Prediction Error:", error);
-    // Fallback heuristic if AI fails
-    const avgThreshold = data.ptaResults.reduce((acc, curr) => acc + curr.threshold, 0) / data.ptaResults.length;
-    let grade = "Normal";
-    if (avgThreshold > 25) grade = "Mild";
-    if (avgThreshold > 40) grade = "Moderate";
-    if (avgThreshold > 60) grade = "Severe";
-    if (avgThreshold > 80) grade = "Profound";
-
-    return {
-      score: Math.min(100, avgThreshold * 1.2),
-      grade,
-      recommendation: "Please consult an audiologist for a detailed examination.",
-      analysis: "Based on the average threshold across frequencies.",
-    };
+    return null;
   }
 }
 
@@ -98,42 +83,18 @@ const LIFE_RHYTHM_SYSTEM_INSTRUCTION = `당신은 "오블리주 라이프리듬 
 - 오행 균형 데이터
 - 생활 리듬 분석
 
-이 분석은 의료 진단이 아닌
-웰니스와 생활 습관 개선을 위한 참고 가이드입니다.
+이 분석은 의료 진단이 아닌 웰니스 가이드임을 명시합니다.
 
-입력 데이터
-
-사용자는 다음 정보를 제공합니다.
-
-- 이름
-- 생년월일
-- 출생시간
-
-분석 기준
-
-동양의 오행 균형 개념을 기반으로
-개인의 라이프 리듬을 해석합니다.
-
-오행 요소
-
-목(木) : 성장, 신경계, 활동성  
-화(火) : 순환, 에너지, 활력  
-토(土) : 소화, 안정성  
-금(金) : 호흡기, 청각 건강  
-수(水) : 회복력, 면역력
-
-출력 구조
-
-다음 구조로 결과를 작성합니다.
+출력 구조 (JSON 형식)
 
 1️⃣ 라이프 리듬 요약  
-개인의 에너지 패턴과 전반적인 라이프 리듬을 설명합니다.
+사용자의 전반적인 에너지 흐름과 현재 리듬을 요약합니다.
 
 2️⃣ 오행 균형 분석  
-각 요소의 상대적인 강점과 약점을 간단히 설명합니다.
+목(木), 화(火), 토(土), 금(金), 수(水) 요소의 균형 상태를 분석합니다.
 
-3️⃣ 청각 건강 관리 가이드  
-금(金) 요소는 청각과 호흡기 건강과 연관됩니다.
+3️⃣ 청각 건강 관리 가이드 (금(金) 요소 연계)  
+청각 건강과 관련된 오행 에너지를 분석하여 맞춤 가이드를 제공합니다.
 
 다음 내용을 포함합니다.
 
@@ -177,6 +138,7 @@ export async function analyzeLifeRhythm(data: { name: string; birthDate: string;
   // Local deterministic logic to analyze life rhythm without AI
   const getDominantElement = (dateStr: string) => {
     const numbers = dateStr.replace(/[^0-9]/g, '');
+    if (!numbers) return { index: 0, name: '목(木)' };
     const sum = numbers.split('').reduce((acc, curr) => acc + parseInt(curr), 0);
     const elements = ['목(木)', '화(火)', '토(土)', '금(金)', '수(水)'];
     return {
@@ -189,103 +151,103 @@ export async function analyzeLifeRhythm(data: { name: string; birthDate: string;
   
   const reports = [
     {
-      summary: `${data.name}님은 성장의 에너지가 강한 '목(木)'의 리듬을 가지고 있습니다. 새로운 일을 시작하는 추진력이 뛰어나며 창의적인 아이디어가 풍부한 시기입니다.`,
-      balanceAnalysis: "현재 목(木)의 기운이 강하여 활동성이 높지만, 자칫 신경계의 피로가 쌓일 수 있습니다. 토(土)의 안정성을 보완하여 균형을 맞추는 것이 중요합니다.",
+      summary: `반갑습니다, ${data.name}님. 오늘 분석해드린 ${data.name}님의 에너지는 마치 이른 봄의 대지처럼 생동감이 넘치는 '목(木)'의 리듬을 품고 계시네요. 새로운 시작을 두려워하지 않는 용기와 창의적인 사고가 ${data.name}님의 가장 큰 자산입니다. 현재는 무언가 결실을 맺기보다는 씨앗을 뿌리고 싹을 틔우는 추진력이 최고조에 달해 있는 시기라고 볼 수 있습니다. ${data.name}님 특유의 뻗어 나가는 기운이 주변 사람들에게도 긍정적인 영감을 주고 있군요.`,
+      balanceAnalysis: "목(木)의 기운이 매우 강하게 작용하고 있습니다. 이는 활동성을 높여주지만, 한편으로는 신경계가 과도하게 긴장되어 쉽게 피로를 느낄 수 있음을 의미합니다. 나무가 잘 자라기 위해서는 단단한 흙(土)이 뿌리를 잡아주어야 하듯, 현재 ${data.name}님께는 마음의 안정과 신체의 균형을 잡아주는 '토(土)'의 에너지를 보완하는 것이 무엇보다 중요합니다. 지나친 의욕이 몸의 긴장을 유발할 수 있으니, '멈춤'의 미학을 실천해보시는 건 어떨까요?",
       hearingGuide: {
-        content: "목의 기운이 강할 때는 간과 신경계가 민감해질 수 있으며, 이는 청각 예민도로 이어질 수 있습니다.",
-        tips: ["조용한 숲속 소리 듣기", "이어폰 볼륨 50% 이하 유지", "취침 전 명상 음악", "비타민 B군 섭취"]
+        content: "목의 기운이 강한 분들은 소리에 대한 감각이 매우 예민한 편입니다. 특히 스트레스가 쌓이면 귀가 예민해지거나 소음으로 인한 피로도가 급격히 올라갈 수 있으니 주의가 필요합니다. 간의 기운이 귀의 예민도와 연결되어 있으므로, 간의 피로를 풀어주는 것이 곧 청각 건강을 지키는 길입니다.",
+        tips: ["하루 15분, 자연의 소리(숲, 새소리)로 청각 정화하기", "이어폰 사용 시 볼륨을 평소보다 한 단계 낮추기", "취침 전 뇌파 안정에 도움을 주는 60bpm 이하의 클래식 감상", "신경 안정에 도움을 주는 비타민 B군과 마그네슘 섭취", "귀 뒤쪽의 예풍혈을 부드럽게 마사지하여 긴장 완화하기"]
       },
-      bodyTrend: "근육의 긴장도가 높고 눈이 쉽게 피로해질 수 있는 체질입니다. 스트레칭을 생활화하세요.",
+      bodyTrend: "근육이 쉽게 뭉치고 눈이 자주 건조해지는 경향이 있습니다. 이는 체내 에너지가 상체로 쏠려 있기 때문이니, 하체를 따뜻하게 하고 수시로 전신 스트레칭을 해주시는 것이 좋습니다. 특히 목과 어깨의 결림이 두통이나 이명으로 이어지지 않도록 수시로 이완해주어야 합니다.",
       wellnessGuide: {
-        exercise: "요가, 필라테스 등 유연성 운동",
-        diet: "신선한 녹색 채소, 신맛이 나는 과일",
-        sleep: "밤 11시 이전 취침 (간 회복 시간)",
-        stress: "숲길 산책이나 원예 활동"
+        exercise: "경직된 근육을 이완해주는 요가나 필라테스, 혹은 숲길 산책이 가장 좋습니다. 격렬한 운동보다는 호흡과 함께하는 정적인 움직임이 에너지를 순환시키는 데 효과적입니다.",
+        diet: "간의 해독을 돕는 신선한 녹색 채소와 기운을 돋우는 신맛이 나는 과일(레몬, 매실)을 추천합니다. 아침에 마시는 따뜻한 녹차 한 잔이 목의 기운을 맑게 해줍니다.",
+        sleep: "간 에너지가 회복되는 밤 11시부터 새벽 3시 사이에는 반드시 깊은 잠에 들어야 합니다. 잠들기 전 스마트폰 사용은 뇌를 각성시켜 목의 기운을 더욱 날카롭게 만드니 피해주세요.",
+        stress: "원예 활동이나 나무가 많은 곳에서의 휴식이 정신적 피로를 씻어내는 데 특효입니다. 초록색을 가까이하는 것만으로도 ${data.name}님의 에너지는 빠르게 회복될 것입니다."
       },
       dailyRhythm: {
-        focusTime: "오전 7시 ~ 11시",
-        restTime: "오후 1시 ~ 3시",
-        habits: ["아침 기지개", "충분한 수분 섭취", "눈 마사지"]
+        focusTime: "오전 7시 ~ 11시 (아이디어가 샘솟고 추진력이 가장 좋은 시간)",
+        restTime: "오후 1시 ~ 3시 (눈의 피로를 풀고 간의 열기를 식혀야 하는 시간)",
+        habits: ["기상 직후 전신 기지개 켜기", "미지근한 물에 레몬 한 조각 띄워 마시기", "업무 중 50분마다 3분간 눈 마사지", "초록색 식물 바라보며 심호흡하기"]
       }
     },
     {
-      summary: `${data.name}님은 열정적이고 활기찬 '화(火)'의 리듬을 가지고 있습니다. 대인관계에서 에너지를 얻으며 표현력이 풍부하고 밝은 기운이 넘칩니다.`,
-      balanceAnalysis: "화(火)의 기운이 충만하여 열정이 넘치지만, 심혈관계의 과부하를 주의해야 합니다. 수(水)의 차분함으로 열기를 식혀주는 지혜가 필요합니다.",
+      summary: `안녕하세요, ${data.name}님. ${data.name}님의 에너지를 분석해보니 한여름의 태양처럼 뜨겁고 화려한 '화(火)'의 리듬이 느껴집니다. 대인관계에서 빛을 발하며, 주변 사람들에게 긍정적인 에너지를 전파하는 능력이 탁월하시네요. 지금은 ${data.name}님의 열정이 꽃을 피우는 시기로, 예술적 감각이나 표현력이 매우 예리해져 있습니다. ${data.name}님이 계신 곳은 언제나 활기가 넘치겠군요!`,
+      balanceAnalysis: "화(火)의 기운이 충만하여 활력이 넘치지만, 에너지가 너무 한꺼번에 분출되면 심혈관계에 부담이 가거나 감정 기복이 생길 수 있습니다. 타오르는 불길을 다스리기 위해서는 차분하고 깊은 '수(水)'의 에너지가 필요합니다. 열정을 유지하면서도 내면의 평온을 찾는 완급 조절이 필요한 시점입니다. 가끔은 혼자만의 시간을 통해 뜨거워진 마음을 식혀주는 것이 장기적인 활력의 비결입니다.",
       hearingGuide: {
-        content: "화의 기운이 높으면 체내 열기가 위로 올라와 귀가 먹먹해지거나 이명이 발생할 가능성이 있습니다.",
-        tips: ["시원한 물소리 듣기", "고주파 소음 피하기", "귀 주변 냉찜질", "충분한 휴식"]
+        content: "화의 기운이 과하면 체내 열기가 머리 쪽으로 올라와 귀가 먹먹해지거나 갑작스러운 이명이 생길 수 있습니다. 열을 내리고 순환을 돕는 관리가 필수적입니다. 심장의 열이 귀의 압력과 연결되어 있으므로 마음을 차분히 가라앉히는 것이 중요합니다.",
+        tips: ["시원한 물소리나 파도 소리를 들으며 열기 식히기", "클럽이나 공연장 등 고주파 소음 환경 피하기", "귀 주변을 차가운 수건으로 가볍게 찜질하기", "충분한 수분 섭취로 체내 열 순환 돕기", "심장 안정을 돕는 연자육차나 대추차 마시기"]
       },
-      bodyTrend: "안면 홍조가 있거나 가슴 답답함을 느낄 수 있는 체질입니다. 열을 내리는 활동이 필요합니다.",
+      bodyTrend: "얼굴에 열이 자주 오르거나 가슴이 답답함을 느낄 수 있습니다. 혈액 순환이 상체에 집중되지 않도록 족욕 등을 통해 열을 아래로 내려주세요. 땀을 너무 많이 흘리면 진액이 말라 청각 감각이 둔해질 수 있으니 적절한 수분 보충이 필수입니다.",
       wellnessGuide: {
-        exercise: "수영, 가벼운 조깅",
-        diet: "쓴맛이 나는 채소(고들빼기, 상추), 붉은색 과일",
-        sleep: "심장 안정을 위해 깊은 수면 유도",
-        stress: "명상과 심호흡"
+        exercise: "열기를 발산하면서도 차분함을 유지할 수 있는 수영이나 가벼운 야간 조깅을 추천합니다. 격렬한 경쟁보다는 자신의 페이스를 유지할 수 있는 운동이 좋습니다.",
+        diet: "심장의 열을 내려주는 쓴맛 채소(상추, 치커리, 고들빼기)와 수분이 많은 수박, 참외가 좋습니다. 자극적인 매운 음식은 화의 기운을 더욱 부추기니 자제해주세요.",
+        sleep: "심장의 안정을 위해 잠들기 1시간 전부터는 스마트폰 사용을 금하고 조명을 낮추세요. 시원한 침구류를 사용하는 것도 깊은 잠에 도움이 됩니다.",
+        stress: "정적인 명상이나 깊은 복식 호흡이 과열된 마음을 식히는 데 큰 도움이 됩니다. 붉은색보다는 차분한 푸른색 계열의 소품을 가까이해보세요."
       },
       dailyRhythm: {
-        focusTime: "오전 11시 ~ 오후 1시",
-        restTime: "오후 7시 ~ 9시",
-        habits: ["미지근한 물 샤워", "심호흡 5분", "카페인 줄이기"]
+        focusTime: "오전 11시 ~ 오후 1시 (사회적 활동과 소통이 가장 활발한 시간)",
+        restTime: "오후 7시 ~ 9시 (하루의 열기를 식히고 내면으로 침잠해야 하는 시간)",
+        habits: ["미지근한 물로 가볍게 샤워하기", "하루 3번 5분간 복식 호흡", "카페인 섭취 줄이고 맑은 물 마시기", "거울 보며 밝게 웃어주기"]
       }
     },
     {
-      summary: `${data.name}님은 안정적이고 포용력이 넓은 '토(土)'의 리듬을 가지고 있습니다. 주변 사람들에게 신뢰를 주며 매사에 신중하고 조화로운 에너지를 발산합니다.`,
-      balanceAnalysis: "토(土)의 기운이 안정감을 주지만, 생각이 많아지면 소화계에 부담이 갈 수 있습니다. 목(木)의 활동성을 더해 정체를 막아주어야 합니다.",
+      summary: `반갑습니다, ${data.name}님. 분석 결과 ${data.name}님은 대지처럼 넓고 깊은 포용력을 지닌 '토(土)'의 리듬을 가지고 계시네요. 매사에 신중하고 조화로움을 추구하며, 주변 사람들에게 든든한 버팀목이 되어주는 에너지를 지니고 있습니다. 현재는 그동안 쌓아온 노력들이 안정적으로 자리를 잡는 시기라고 볼 수 있습니다. ${data.name}님의 듬직함이 주변에 큰 위안이 되고 있네요.`,
+      balanceAnalysis: "토(土)의 기운은 안정감을 주지만, 에너지가 정체되면 생각이 많아지고 행동력이 떨어질 수 있습니다. 흙이 굳지 않도록 나무(木)가 뿌리를 내리듯, 적절한 활동성을 더해 에너지를 순환시켜야 합니다. 지나친 고민은 소화계의 흐름을 방해하고 몸을 무겁게 만들 수 있으니, 단순하게 생각하고 즉각적으로 움직이는 연습이 필요합니다.",
       hearingGuide: {
-        content: "토의 기운은 전반적인 신체 순환과 연관되어 있으며, 순환 저하는 청력 저하의 원인이 될 수 있습니다.",
-        tips: ["규칙적인 청력 운동", "자연의 소리 감상", "귀 마사지", "자극적인 소리 지양"]
+        content: "토의 기운은 전반적인 신체 순환의 중심입니다. 순환이 정체되면 귀 내부의 압력 조절이 어려워지거나 귀가 꽉 찬 듯한 느낌을 받을 수 있으므로, 규칙적인 자극을 통해 감각을 깨워주는 것이 좋습니다. 비위의 건강이 청각의 선명도와 연결되어 있습니다.",
+        tips: ["규칙적인 청력 훈련 게임으로 감각 유지하기", "새소리, 바람 소리 등 자연의 소리에 집중하기", "귀 주변의 혈자리를 부드럽게 지압하기", "너무 자극적이거나 큰 소리는 피하고 부드러운 음향 선호하기", "식사 후 바로 눕지 않고 가볍게 움직여 순환 돕기"]
       },
-      bodyTrend: "소화력이 약해지거나 몸이 무겁게 느껴질 수 있는 체질입니다. 규칙적인 식사가 핵심입니다.",
+      bodyTrend: "소화 기능이 예민해지거나 몸이 쉽게 붓고 무겁게 느껴질 수 있습니다. 특히 습한 날씨에 컨디션이 떨어지기 쉬우니 주의하세요. 규칙적인 식사와 가벼운 움직임이 ${data.name}님께는 최고의 보약입니다.",
       wellnessGuide: {
-        exercise: "맨발 걷기, 등산",
-        diet: "단맛이 나는 곡물, 노란색 채소(단호박, 고구마)",
-        sleep: "규칙적인 수면 패턴 유지",
-        stress: "흙을 만지는 활동이나 도예"
+        exercise: "대지의 기운을 직접 느낄 수 있는 맨발 걷기나 완만한 등산을 추천합니다. 흙을 밟으며 걷는 행위 자체가 ${data.name}님의 에너지를 정화해줍니다.",
+        diet: "비위를 편안하게 하는 단맛 나는 곡물(현미, 찹쌀)이나 노란색 채소(단호박, 당근, 고구마)가 좋습니다. 과식은 금물이며 소량씩 자주 드시는 것을 권장합니다.",
+        sleep: "일정한 시간에 자고 일어나는 규칙적인 수면 패턴이 건강의 핵심입니다. 잠자리가 바뀌면 예민해질 수 있으니 익숙하고 편안한 환경을 조성해주세요.",
+        stress: "흙을 만지는 원예 활동이나 도자기 만들기 등 손을 사용하는 취미가 좋습니다. 생각을 멈추고 단순한 반복 작업에 몰입해보세요."
       },
       dailyRhythm: {
-        focusTime: "오후 1시 ~ 3시",
-        restTime: "오전 9시 ~ 10시",
-        habits: ["식후 10분 걷기", "배 따뜻하게 하기", "정해진 시간에 식사"]
+        focusTime: "오후 1시 ~ 3시 (집중력이 가장 안정적이고 효율적인 시간)",
+        restTime: "오전 9시 ~ 10시 (신체가 서서히 깨어나는 데 시간이 필요한 시간)",
+        habits: ["식후 10분간 가볍게 산책하기", "배를 항상 따뜻하게 유지하기", "정해진 시간에 소량씩 규칙적으로 식사하기", "따뜻한 생강차로 순환 돕기"]
       }
     },
     {
-      summary: `${data.name}님은 결단력이 있고 깔끔한 '금(金)'의 리듬을 가지고 있습니다. 정의감이 강하며 논리적이고 체계적인 에너지 패턴을 보입니다.`,
-      balanceAnalysis: "금(金)의 기운은 폐와 호흡기, 그리고 청각과 직결됩니다. 건조해지기 쉬운 기운이므로 화(火)의 따뜻함으로 부드럽게 만들어야 합니다.",
+      summary: `안녕하세요, ${data.name}님. ${data.name}님의 에너지는 차갑고 단단한 바위나 세련된 금속처럼 예리한 '금(金)'의 리듬을 띠고 있습니다. 결단력이 뛰어나고 논리적이며, 복잡한 상황을 깔끔하게 정리하는 능력이 매우 훌륭하시네요. 지금은 불필요한 것들을 쳐내고 핵심에 집중하여 완성도를 높이는 시기입니다. ${data.name}님의 명쾌함이 빛을 발하고 있군요!`,
+      balanceAnalysis: "금(金)의 기운은 매우 강력한 집중력을 주지만, 자칫하면 스스로를 너무 엄격하게 다스려 스트레스가 쌓일 수 있습니다. 단단한 금속을 부드럽게 녹이는 불(화)의 따뜻한 감성과 유연함이 필요합니다. 원칙도 중요하지만 때로는 유연하게 상황을 받아들이는 마음의 여유가 ${data.name}님의 성장을 도울 것입니다. 완벽주의보다는 80%의 완성도에 만족하는 연습을 해보세요.",
       hearingGuide: {
-        content: "금의 기운은 청각 건강의 핵심입니다. 이 기운이 과하거나 부족하면 청력 손실에 가장 민감하게 반응합니다.",
-        tips: ["백색 소음 활용", "금속성 고음 피하기", "코와 목 건강 관리", "정기적인 청력 검사"]
+        content: "금의 기운은 청각 건강과 가장 밀접한 관련이 있습니다. 이 기운이 과하면 고음역대에 민감해지고, 부족하면 소리가 명확하게 들리지 않는 현상이 생길 수 있습니다. 폐와 대장의 건강이 청각의 선명도와 직결되어 있으니 호흡기 관리에 유의하세요.",
+        tips: ["마음을 안정시키는 백색 소음(빗소리 등) 활용하기", "금속성의 날카로운 고음 노출 최소화하기", "폐와 호흡기 건강을 위해 미세먼지 관리와 습도 조절 철저히 하기", "6개월에 한 번씩 정기적인 청력 검사 받기", "목소리를 크게 내어 노래를 부르는 등 폐활량 늘리기"]
       },
-      bodyTrend: "피부가 건조해지기 쉽고 호흡기가 예민한 체질입니다. 습도 조절이 매우 중요합니다.",
+      bodyTrend: "피부가 건조해지기 쉽고 호흡기가 예민할 수 있습니다. 체내 수분이 부족하지 않도록 관리하고 실내 습도를 적절히 유지하는 것이 중요합니다. 슬픈 감정에 깊이 빠지면 기운이 가라앉아 청력이 둔해질 수 있으니 밝은 에너지를 가까이하세요.",
       wellnessGuide: {
-        exercise: "심폐 기능 강화 운동(빠르게 걷기)",
-        diet: "매운맛이 나는 채소(무, 배추), 흰색 음식(도라지, 배)",
-        sleep: "가습기를 활용한 쾌적한 수면 환경",
-        stress: "정리정돈이나 미니멀리즘 실천"
+        exercise: "심폐 기능을 강화할 수 있는 빠르게 걷기나 계단 오르기를 추천합니다. 맑은 공기를 마시며 하는 유산소 운동이 ${data.name}님의 금 기운을 정화해줍니다.",
+        diet: "폐 건강에 도움을 주는 무, 도라지, 배, 연근 등 흰색 음식을 자주 섭취하세요. 약간의 매운맛은 기운을 발산시키는 데 도움이 됩니다.",
+        sleep: "건조하지 않은 쾌적한 습도 환경에서 충분한 수면을 취하는 것이 필수입니다. 베개 높이를 적절히 조절하여 호흡이 편안하게 해주세요.",
+        stress: "주변 환경을 정리정돈하거나 미니멀한 생활을 실천하며 마음을 비워보세요. 일기 쓰기를 통해 복잡한 생각을 정리하는 것도 좋습니다."
       },
       dailyRhythm: {
-        focusTime: "오후 3시 ~ 5시",
-        restTime: "오전 7시 ~ 8시",
-        habits: ["따뜻한 차 마시기", "코 세척", "심호흡 훈련"]
+        focusTime: "오후 3시 ~ 5시 (논리적 사고와 업무 효율이 극대화되는 시간)",
+        restTime: "오전 7시 ~ 8시 (폐 에너지가 깨어나며 정화가 필요한 시간)",
+        habits: ["따뜻한 도라지차나 배즙 마시기", "수시로 코 세척하여 호흡기 관리하기", "하루 5분간 깊은 심호흡 훈련하기", "주변 환경 10분간 정리하기"]
       }
     },
     {
-      summary: `${data.name}님은 유연하고 지혜로운 '수(水)'의 리듬을 가지고 있습니다. 적응력이 뛰어나며 깊은 사고력과 강한 생명력을 지닌 에너지 패턴입니다.`,
-      balanceAnalysis: "수(水)의 기운은 신장과 방광, 그리고 뼈 건강과 연관됩니다. 냉해지기 쉬운 기운이므로 토(土)의 따뜻한 흙으로 에너지를 가두어 활용해야 합니다.",
+      summary: `반갑습니다, ${data.name}님. ${data.name}님은 깊은 바다나 유연한 강물처럼 지혜롭고 수용력이 넓은 '수(수)'의 리듬을 가지고 계시네요. 어떤 환경에서도 잘 적응하며, 깊은 사고력과 강한 생명력을 지닌 에너지를 품고 있습니다. 현재는 내면의 힘을 비축하고 지혜를 모으는 내실 있는 시기라고 할 수 있습니다. ${data.name}님의 깊이 있는 통찰력이 돋보입니다.`,
+      balanceAnalysis: "수(水)의 기운은 유연함을 주지만, 에너지가 너무 차가워지면 활동력이 떨어지고 우울감을 느끼거나 생각이 너무 깊어질 수 있습니다. 물을 따뜻하게 데워주는 흙(土)의 안정적인 온기와 햇볕(화)의 에너지가 필요합니다. 혼자만의 생각에 잠기기보다는 사람들과 온기를 나누며 에너지를 밖으로 순환시키는 노력이 필요합니다. 밝고 따뜻한 곳으로 자주 나가보세요.",
       hearingGuide: {
-        content: "수 기운은 한의학적으로 귀와 직접 연결되어 있습니다. 수 기운의 관리는 노인성 난청 예방의 핵심입니다.",
-        tips: ["낮은 저음의 음악", "귀 주변 지압", "충분한 수분 섭취", "추운 환경 피하기"]
+        content: "수 기운은 한의학적으로 귀의 기능과 직접 연결되어 있습니다. 수 기운이 약해지면 청력의 기초 체력이 떨어지거나 귀에서 바람 소리가 들리는 듯한 느낌을 받을 수 있으므로, 근본적인 에너지를 보충하는 관리가 중요합니다. 신장의 기운이 청력의 근본입니다.",
+        tips: ["낮고 부드러운 저음 위주의 음악 감상하기", "귀 주변과 귓바퀴를 수시로 부드럽게 마사지하여 온기 전하기", "체온이 떨어지지 않도록 항상 따뜻한 물 마시기", "추운 날씨에는 귀마개나 모자로 귀를 따뜻하게 보호하기", "검은콩이나 검은깨 등 블랙 푸드 섭취로 신장 기운 돕기"]
       },
-      bodyTrend: "하체가 차가워지기 쉽고 피로를 쉽게 느낄 수 있는 체질입니다. 체온 유지가 필수입니다.",
+      bodyTrend: "하체가 차가워지기 쉽고 허리나 무릎에 피로를 빨리 느낄 수 있습니다. 전신 온도를 높이는 관리가 체력 유지의 핵심입니다. 공포심이나 불안감이 커지면 기운이 위축되어 청력에 영향을 줄 수 있으니 마음을 담대히 하세요.",
       wellnessGuide: {
-        exercise: "근력 운동, 스쿼트",
-        diet: "짠맛이 나는 해조류, 검은색 음식(검은콩, 흑미)",
-        sleep: "충분한 수면 시간 확보",
-        stress: "반신욕이나 족욕"
+        exercise: "하체 근력을 강화할 수 있는 스쿼트나 가벼운 근력 운동을 추천합니다. 물속에서 하는 아쿠아로빅도 ${data.name}님의 기운과 잘 맞습니다.",
+        diet: "신장 건강에 도움을 주는 검은콩, 흑미, 미역, 다시마 등 블랙 푸드가 좋습니다. 짠맛은 적당히 섭취하되 과하지 않도록 주의하세요.",
+        sleep: "다른 체질보다 더 많은 수면 시간이 필요하므로 충분한 휴식을 취하세요. 밤늦게까지 깨어 있는 것은 수 기운을 고갈시키니 주의해야 합니다.",
+        stress: "따뜻한 물에 몸을 담그는 반신욕이나 족욕이 스트레스 해소에 최고입니다. 잔잔한 물결을 바라보는 '물멍'도 마음의 평온을 줍니다."
       },
       dailyRhythm: {
-        focusTime: "오후 5시 ~ 7시",
-        restTime: "오후 11시 ~ 오전 1시",
-        habits: ["족욕 15분", "검은콩 두유 섭취", "허리 스트레칭"]
+        focusTime: "오후 5시 ~ 7시 (창의적 사고가 깊어지고 통찰력이 예리해지는 시간)",
+        restTime: "오후 11시 ~ 오전 1시 (에너지 비축과 신장 회복이 꼭 필요한 시간)",
+        habits: ["잠들기 전 15분간 따뜻한 족욕하기", "검은콩 두유나 견과류 챙겨 마시기", "수시로 허리 스트레칭 하여 기운 소통시키기", "따뜻한 차 마시며 명상하기"]
       }
     }
   ];

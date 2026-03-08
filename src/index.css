@@ -127,6 +127,26 @@
   }
   .bg-black\/80 {
     background: transparent !important;
+    backdrop-filter: none !important;
+  }
+  #life-rhythm-report-content {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    background: white !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .bg-slate-50, .bg-purple-50\/50, .bg-brand-black {
+    background-color: #f8fafc !important;
+    color: black !important;
+    border-color: #e2e8f0 !important;
+  }
+  .text-white, .text-brand-gold, .text-slate-700, .text-slate-900 {
+    color: black !important;
+  }
+  .bg-brand-black {
+    border-bottom: 2px solid black !important;
   }
 }
 
