@@ -132,14 +132,17 @@ export default function SoundBlockTetris({ onClose, language, translations: t }:
       gainNode.current = audioCtx.current.createGain();
       gainNode.current.connect(audioCtx.current.destination);
     }
-    if (audioCtx.current.state === 'suspended') {
-      await audioCtx.current.resume();
+    
+    const ctx = audioCtx.current;
+    if (ctx.state === 'suspended') {
+      await ctx.resume();
     }
+    
     // Play a silent buffer to unlock audio on mobile
-    const buffer = audioCtx.current.createBuffer(1, 1, 22050);
-    const source = audioCtx.current.createBufferSource();
+    const buffer = ctx.createBuffer(1, 1, 22050);
+    const source = ctx.createBufferSource();
     source.buffer = buffer;
-    source.connect(audioCtx.current.destination);
+    source.connect(ctx.destination);
     source.start(0);
   };
 
@@ -352,7 +355,7 @@ export default function SoundBlockTetris({ onClose, language, translations: t }:
   }, [gameState, activePiece, grid, level, successRate]);
 
   const startGame = async () => {
-    await initAudio();
+    await initAudio(); // Call this FIRST for iOS
     setGrid(Array(ROWS).fill(null).map(() => Array(COLS).fill('')));
     setActivePiece(createPiece());
     setNextPiece(createPiece());
@@ -512,14 +515,14 @@ export default function SoundBlockTetris({ onClose, language, translations: t }:
              </div>
           </div>
 
-          <div className="bg-[#111] p-2 sm:p-3 rounded-[32px] sm:rounded-[40px] border-[4px] sm:border-[8px] border-white/5 shadow-2xl shadow-brand-gold/5">
-            <div className="grid grid-cols-10 gap-[2px] sm:gap-1 bg-black p-1 rounded-[24px] sm:rounded-[28px] overflow-hidden">
+          <div className="bg-[#111] p-1.5 sm:p-3 rounded-[24px] sm:rounded-[40px] border-[3px] sm:border-[8px] border-white/5 shadow-2xl shadow-brand-gold/5">
+            <div className="grid grid-cols-10 gap-[1px] sm:gap-1 bg-black p-0.5 rounded-[18px] sm:rounded-[28px] overflow-hidden">
               {displayGrid.map((row, y) => (
                 row.map((cell, x) => (
                   <div 
                     key={`${y}-${x}`} 
                     className={cn(
-                      "w-[6vw] h-[6vw] max-w-[32px] max-h-[32px] sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-[4px] sm:rounded-lg transition-all duration-150 relative overflow-hidden",
+                      "w-[5.5vw] h-[5.5vw] max-w-[24px] max-h-[24px] sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-[2px] sm:rounded-lg transition-all duration-150 relative overflow-hidden",
                       cell ? COLORS[cell] : "bg-white/[0.03]"
                     )}
                   >

@@ -262,17 +262,22 @@ export default function App() {
   const gainNode = useRef<GainNode | null>(null);
 
   const initAudio = async () => {
+    // Direct creation of AudioContext on user interaction is key for iOS
     if (!audioContext.current) {
       audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
-    if (audioContext.current.state === 'suspended') {
-      await audioContext.current.resume();
+    
+    const ctx = audioContext.current;
+    
+    if (ctx.state === 'suspended') {
+      await ctx.resume();
     }
+    
     // Play a silent buffer to unlock audio on mobile
-    const buffer = audioContext.current.createBuffer(1, 1, 22050);
-    const source = audioContext.current.createBufferSource();
+    const buffer = ctx.createBuffer(1, 1, 22050);
+    const source = ctx.createBufferSource();
     source.buffer = buffer;
-    source.connect(audioContext.current.destination);
+    source.connect(ctx.destination);
     source.start(0);
   };
 
@@ -409,7 +414,7 @@ export default function App() {
         setShowLanding(true);
         break;
       case 'start-test':
-        initAudio();
+        await initAudio();
         addUserMessage(t.startTest);
         setStep('ask-age-group');
         addBotMessage((t as any).askAgeGroup);
@@ -658,13 +663,13 @@ export default function App() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
           onClick={async () => {
+            await initAudio(); // Call this FIRST for iOS
             setShowLanding(false);
             setMessages([
               { id: '1', type: 'bot', text: t.welcome },
               { id: '2', type: 'bot', text: t.intro }
             ]);
             setStep('welcome');
-            await initAudio();
           }}
           className="w-full max-w-md py-6 rounded-full bg-brand-gold text-brand-black font-bold text-xl shadow-xl shadow-brand-gold/20 mt-8 mb-4 flex items-center justify-center gap-2"
         >
@@ -1084,21 +1089,6 @@ export default function App() {
             animate={{ opacity: 1, x: 0 }}
             className="flex flex-col items-center justify-center text-center space-y-8 pt-32 pb-20"
           >
-            <div className="relative w-full aspect-video rounded-[40px] overflow-hidden shadow-2xl shadow-brand-gold/10 mb-4">
-              <img 
-                src="https://images.unsplash.com/photo-1559038910-281ce0f7eaa4?auto=format&fit=crop&q=80&w=800" 
-                alt="Hearing Game" 
-                className="w-full h-full object-cover opacity-80"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-brand-black via-transparent to-transparent" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-20 h-20 rounded-full bg-brand-gold/20 backdrop-blur-md flex items-center justify-center border border-brand-gold/40">
-                  <Music className="w-10 h-10 text-brand-gold" />
-                </div>
-              </div>
-            </div>
-            
             <div className="space-y-4 px-6">
               <h2 className="text-2xl font-black text-white leading-tight mb-2">{(t as any).navGame}</h2>
               <span className="px-4 py-1 bg-brand-gold/10 text-brand-gold text-[10px] font-black rounded-full uppercase tracking-[0.3em] border border-brand-gold/20">
@@ -1135,23 +1125,15 @@ export default function App() {
               </button>
 
               <button 
-                onClick={() => setShowMimiGame(true)}
+                onClick={() => setShowTetrisGame(true)}
                 className="w-full py-6 rounded-[32px] bg-brand-gold text-brand-black font-black text-2xl shadow-2xl shadow-brand-gold/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex flex-col items-center justify-center gap-1 group relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
                 <div className="flex items-center gap-3 relative z-10">
                   <Play className="w-8 h-8 fill-current" />
-                  <span>Mimi's Sound Adventure</span>
+                  <span>Sound Block Tetris</span>
                 </div>
-                <span className="text-[10px] uppercase tracking-[0.2em] opacity-60 relative z-10">New 2D Exploration Game</span>
-              </button>
-
-              <button 
-                onClick={() => setShowTetrisGame(true)}
-                className="w-full py-5 rounded-3xl bg-brand-dark-gray/60 text-white font-black text-xl border border-brand-border hover:bg-brand-border transition-all flex items-center justify-center gap-3"
-              >
-                <Music className="w-6 h-6" />
-                <span>Sound Block Tetris</span>
+                <span className="text-[10px] uppercase tracking-[0.2em] opacity-60 relative z-10">Auditory Cognitive Training</span>
               </button>
             </div>
           </motion.div>
