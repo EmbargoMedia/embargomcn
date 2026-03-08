@@ -131,7 +131,7 @@ const WelfareFinder: React.FC<WelfareFinderProps> = ({ onClose, lang, isTab = fa
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItem, setSelectedItem] = useState<WelfareItem | null>(null);
   const [activeTab, setActiveTab] = useState<'summary' | 'prep'>('summary');
-  const [showInquiryModal, setShowInquiryModal] = useState(false);
+  const [showInquiryForm, setShowInquiryForm] = useState(false);
   const [inquiryForm, setInquiryForm] = useState({
     name: '',
     phone: '',
@@ -145,7 +145,7 @@ const WelfareFinder: React.FC<WelfareFinderProps> = ({ onClose, lang, isTab = fa
   const handleInquirySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     alert('문의가 접수되었습니다. 담당자가 곧 연락드리겠습니다.');
-    setShowInquiryModal(false);
+    setShowInquiryForm(false);
   };
 
   const containerClasses = isTab 
@@ -255,10 +255,15 @@ const WelfareFinder: React.FC<WelfareFinderProps> = ({ onClose, lang, isTab = fa
                     <p className="text-2xl font-black text-brand-gold">{selectedItem.amount}</p>
                   </div>
                   <button 
-                    onClick={() => setShowInquiryModal(true)}
-                    className="bg-brand-gold text-brand-black px-6 py-3 rounded-2xl font-black text-sm shadow-lg shadow-brand-gold/20 hover:scale-105 transition-all"
+                    onClick={() => setShowInquiryForm(!showInquiryForm)}
+                    className={cn(
+                      "px-6 py-3 rounded-2xl font-black text-sm transition-all",
+                      showInquiryForm 
+                        ? "bg-white/10 text-white border border-white/20" 
+                        : "bg-brand-gold text-brand-black shadow-lg shadow-brand-gold/20 hover:scale-105"
+                    )}
                   >
-                    서비스 문의
+                    {showInquiryForm ? '닫기' : '서비스 문의'}
                   </button>
                 </div>
               </div>
@@ -296,203 +301,197 @@ const WelfareFinder: React.FC<WelfareFinderProps> = ({ onClose, lang, isTab = fa
 
               {/* Tab Content */}
               <div className="space-y-8 pb-24">
-                {activeTab === 'summary' ? (
-                  <>
-                    <section className="space-y-3">
-                      <h4 className="text-brand-gold font-black flex items-center gap-2">
-                        <Info className="w-4 h-4" />
-                        지원목적
-                      </h4>
-                      <p className="text-slate-300 leading-relaxed text-sm">
-                        {selectedItem.purpose}
-                      </p>
-                    </section>
+                <AnimatePresence mode="wait">
+                  {showInquiryForm ? (
+                    <motion.div
+                      key="inquiry-form"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 20 }}
+                      className="bg-brand-dark-gray/60 backdrop-blur-xl rounded-[32px] p-8 border border-white/10 shadow-2xl relative overflow-hidden"
+                    >
+                      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-gold to-brand-gold/20" />
+                      
+                      <div className="text-center mb-8">
+                        <h3 className="text-2xl font-black text-white mb-2">서비스 문의하기</h3>
+                        <p className="text-slate-400 text-sm">내가 받을 수 있는 지원제도가 궁금하신가요?</p>
+                      </div>
 
-                    <section className="space-y-3">
-                      <h4 className="text-brand-gold font-black flex items-center gap-2">
-                        <Zap className="w-4 h-4" />
-                        지원금액
-                      </h4>
-                      <p className="text-slate-300 leading-relaxed text-sm">
-                        {selectedItem.amount} ({selectedItem.content})
-                      </p>
-                    </section>
+                      <div className="bg-brand-gold/10 rounded-3xl p-6 mb-8 border border-brand-gold/20 flex items-center gap-4">
+                        <div className="flex-1">
+                          <p className="text-brand-gold text-sm font-black mb-1">지원사업 맞춤 추천부터 행정까지 👋</p>
+                          <p className="text-white text-xs">비즈큐브와 함께 <span className="text-brand-gold font-black">1.4억의 지원사업 확보</span> 완료!</p>
+                        </div>
+                        <div className="w-12 h-12 bg-brand-gold rounded-2xl flex items-center justify-center">
+                          <MessageCircle className="w-6 h-6 text-brand-black" />
+                        </div>
+                      </div>
 
-                    <section className="space-y-3">
-                      <h4 className="text-brand-gold font-black flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4" />
-                        지원조건
-                      </h4>
-                      <ul className="space-y-2">
-                        {selectedItem.conditions.map((c, i) => (
-                          <li key={i} className="text-slate-300 text-sm flex gap-2">
-                            <span className="text-brand-gold">•</span>
-                            {c}
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
+                      <form onSubmit={handleInquirySubmit} className="space-y-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">문의 지원제도</label>
+                          <input 
+                            type="text" 
+                            readOnly 
+                            value={selectedItem?.title}
+                            className="w-full bg-brand-black/50 border border-white/10 rounded-2xl py-4 px-4 text-slate-400 text-sm"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">대표자명</label>
+                          <input 
+                            type="text" 
+                            required
+                            placeholder="대표자명을 입력해주세요"
+                            value={inquiryForm.name}
+                            onChange={(e) => setInquiryForm({...inquiryForm, name: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-gold transition-colors"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">연락처</label>
+                          <input 
+                            type="tel" 
+                            required
+                            placeholder="010-0000-0000"
+                            value={inquiryForm.phone}
+                            onChange={(e) => setInquiryForm({...inquiryForm, phone: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-gold transition-colors"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">상호명</label>
+                          <input 
+                            type="text" 
+                            required
+                            placeholder="상호명을 입력해주세요"
+                            value={inquiryForm.company}
+                            onChange={(e) => setInquiryForm({...inquiryForm, company: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-gold transition-colors"
+                          />
+                        </div>
 
-                    {selectedItem.additionalPoints && (
-                      <section className="space-y-3">
-                        <h4 className="text-brand-gold font-black flex items-center gap-2">
-                          <Star className="w-4 h-4" />
-                          가점사항
-                        </h4>
-                        <ul className="space-y-2">
-                          {selectedItem.additionalPoints.map((p, i) => (
-                            <li key={i} className="text-slate-300 text-sm flex gap-2">
-                              <span className="text-brand-gold">•</span>
-                              {p}
-                            </li>
-                          ))}
-                        </ul>
-                      </section>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <section className="space-y-3">
-                      <h4 className="text-brand-gold font-black flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        신청기간
-                      </h4>
-                      <p className="text-slate-300 leading-relaxed text-sm">
-                        {selectedItem.period}
-                      </p>
-                    </section>
+                        <button 
+                          type="submit"
+                          className="w-full bg-brand-gold text-brand-black font-black py-5 rounded-2xl shadow-xl shadow-brand-gold/20 hover:scale-[1.02] active:scale-[0.98] transition-all mt-4"
+                        >
+                          입력 완료
+                        </button>
+                      </form>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="content-tabs"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="space-y-8"
+                    >
+                      {activeTab === 'summary' ? (
+                        <>
+                          <section className="space-y-3">
+                            <h4 className="text-brand-gold font-black flex items-center gap-2">
+                              <Info className="w-4 h-4" />
+                              지원목적
+                            </h4>
+                            <p className="text-slate-300 leading-relaxed text-sm">
+                              {selectedItem.purpose}
+                            </p>
+                          </section>
 
-                    <section className="space-y-3">
-                      <h4 className="text-brand-gold font-black flex items-center gap-2">
-                        <FileText className="w-4 h-4" />
-                        제출서류
-                      </h4>
-                      <ul className="space-y-2">
-                        {selectedItem.documents.map((d, i) => (
-                          <li key={i} className="text-slate-300 text-sm flex gap-2">
-                            <span className="text-brand-gold">•</span>
-                            {d}
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
+                          <section className="space-y-3">
+                            <h4 className="text-brand-gold font-black flex items-center gap-2">
+                              <Zap className="w-4 h-4" />
+                              지원금액
+                            </h4>
+                            <p className="text-slate-300 leading-relaxed text-sm">
+                              {selectedItem.amount} ({selectedItem.content})
+                            </p>
+                          </section>
 
-                    <section className="space-y-3">
-                      <h4 className="text-brand-gold font-black flex items-center gap-2">
-                        <X className="w-4 h-4" />
-                        제외대상
-                      </h4>
-                      <ul className="space-y-2">
-                        {selectedItem.exclusions.map((e, i) => (
-                          <li key={i} className="text-slate-300 text-sm flex gap-2">
-                            <span className="text-brand-gold">•</span>
-                            {e}
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
-                  </>
-                )}
+                          <section className="space-y-3">
+                            <h4 className="text-brand-gold font-black flex items-center gap-2">
+                              <CheckCircle2 className="w-4 h-4" />
+                              지원조건
+                            </h4>
+                            <ul className="space-y-2">
+                              {selectedItem.conditions.map((c, i) => (
+                                <li key={i} className="text-slate-300 text-sm flex gap-2">
+                                  <span className="text-brand-gold">•</span>
+                                  {c}
+                                </li>
+                              ))}
+                            </ul>
+                          </section>
+
+                          {selectedItem.additionalPoints && (
+                            <section className="space-y-3">
+                              <h4 className="text-brand-gold font-black flex items-center gap-2">
+                                <Star className="w-4 h-4" />
+                                가점사항
+                              </h4>
+                              <ul className="space-y-2">
+                                {selectedItem.additionalPoints.map((p, i) => (
+                                  <li key={i} className="text-slate-300 text-sm flex gap-2">
+                                    <span className="text-brand-gold">•</span>
+                                    {p}
+                                  </li>
+                                ))}
+                              </ul>
+                            </section>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <section className="space-y-3">
+                            <h4 className="text-brand-gold font-black flex items-center gap-2">
+                              <Calendar className="w-4 h-4" />
+                              신청기간
+                            </h4>
+                            <p className="text-slate-300 leading-relaxed text-sm">
+                              {selectedItem.period}
+                            </p>
+                          </section>
+
+                          <section className="space-y-3">
+                            <h4 className="text-brand-gold font-black flex items-center gap-2">
+                              <FileText className="w-4 h-4" />
+                              제출서류
+                            </h4>
+                            <ul className="space-y-2">
+                              {selectedItem.documents.map((d, i) => (
+                                <li key={i} className="text-slate-300 text-sm flex gap-2">
+                                  <span className="text-brand-gold">•</span>
+                                  {d}
+                                </li>
+                              ))}
+                            </ul>
+                          </section>
+
+                          <section className="space-y-3">
+                            <h4 className="text-brand-gold font-black flex items-center gap-2">
+                              <X className="w-4 h-4" />
+                              제외대상
+                            </h4>
+                            <ul className="space-y-2">
+                              {selectedItem.exclusions.map((e, i) => (
+                                <li key={i} className="text-slate-300 text-sm flex gap-2">
+                                  <span className="text-brand-gold">•</span>
+                                  {e}
+                                </li>
+                              ))}
+                            </ul>
+                          </section>
+                        </>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>
         )}
       </div>
-
-      {/* Inquiry Modal */}
-      <AnimatePresence>
-        {showInquiryModal && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
-          >
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 1 }}
-              className="w-full max-w-md bg-brand-dark-gray rounded-[40px] p-8 border border-white/10 relative overflow-hidden"
-            >
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-gold to-brand-gold/20" />
-              
-              <button 
-                onClick={() => setShowInquiryModal(false)}
-                className="absolute top-6 right-6 p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
-              >
-                <X className="w-5 h-5 text-slate-400" />
-              </button>
-
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-black text-white mb-2">서비스 문의하기</h3>
-                <p className="text-slate-400 text-sm">내가 받을 수 있는 지원제도가 궁금하신가요?</p>
-              </div>
-
-              <div className="bg-brand-gold/10 rounded-3xl p-6 mb-8 border border-brand-gold/20 flex items-center gap-4">
-                <div className="flex-1">
-                  <p className="text-brand-gold text-sm font-black mb-1">지원사업 맞춤 추천부터 행정까지 👋</p>
-                  <p className="text-white text-xs">비즈큐브와 함께 <span className="text-brand-gold font-black">1.4억의 지원사업 확보</span> 완료!</p>
-                </div>
-                <div className="w-12 h-12 bg-brand-gold rounded-2xl flex items-center justify-center">
-                  <MessageCircle className="w-6 h-6 text-brand-black" />
-                </div>
-              </div>
-
-              <form onSubmit={handleInquirySubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">문의 지원제도</label>
-                  <input 
-                    type="text" 
-                    readOnly 
-                    value={selectedItem?.title}
-                    className="w-full bg-brand-black/50 border border-white/10 rounded-2xl py-4 px-4 text-slate-400 text-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">대표자명</label>
-                  <input 
-                    type="text" 
-                    required
-                    placeholder="대표자명을 입력해주세요"
-                    value={inquiryForm.name}
-                    onChange={(e) => setInquiryForm({...inquiryForm, name: e.target.value})}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-gold transition-colors"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">연락처</label>
-                  <input 
-                    type="tel" 
-                    required
-                    placeholder="010-0000-0000"
-                    value={inquiryForm.phone}
-                    onChange={(e) => setInquiryForm({...inquiryForm, phone: e.target.value})}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-gold transition-colors"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">상호명</label>
-                  <input 
-                    type="text" 
-                    required
-                    placeholder="상호명을 입력해주세요"
-                    value={inquiryForm.company}
-                    onChange={(e) => setInquiryForm({...inquiryForm, company: e.target.value})}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-gold transition-colors"
-                  />
-                </div>
-
-                <button 
-                  type="submit"
-                  className="w-full bg-brand-gold text-brand-black font-black py-5 rounded-2xl shadow-xl shadow-brand-gold/20 hover:scale-[1.02] active:scale-[0.98] transition-all mt-4"
-                >
-                  입력 완료
-                </button>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 };
