@@ -1223,7 +1223,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowFloatingMenu(false)}
-              className="fixed inset-0 bg-black/60 z-[55] max-w-md mx-auto"
+              className="fixed inset-0 bg-transparent z-[55] max-w-md mx-auto"
             />
             
             <motion.div 
@@ -1231,7 +1231,7 @@ export default function App() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="w-full max-w-md bg-brand-dark-gray border-t border-brand-gold/20 p-8 pb-32 space-y-6 fixed bottom-0 z-[60] rounded-t-[40px] shadow-[0_-20px_50px_rgba(0,0,0,0.5)] max-h-[80vh] overflow-y-auto scrollbar-hide mx-auto left-0 right-0"
+              className="w-full max-w-md bg-brand-dark-gray border-t border-brand-gold/20 p-8 pb-32 space-y-6 fixed bottom-0 z-[60] rounded-t-[40px] max-h-[80vh] overflow-y-auto scrollbar-hide mx-auto left-0 right-0"
             >
               {/* Handle for visual cue */}
               <div className="w-12 h-1.5 bg-brand-border rounded-full mx-auto mb-2 opacity-50" />
